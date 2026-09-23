@@ -9,8 +9,10 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='17' fill='%23101c32'/%3E%3Cpath d='M16 46V18h8l16 17V18h8v28h-8L24 29v17z' fill='%238fd9d3'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="extra.css">
+  <link rel="stylesheet" href="call-script.css">
   <script src="app.js" defer></script>
   <script src="views.js" defer></script>
+  <script src="call-script.js" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -41,5 +43,19 @@
   </div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <dialog id="contact-dialog" class="modal"><form method="dialog" id="contact-form"><div class="modal-head"><div><span class="eyebrow">SALES</span><h2>New contact</h2></div><button class="close" value="cancel" formnovalidate aria-label="Close">×</button></div><div class="form-grid"><label>Full name<input name="name" required autocomplete="name" placeholder="e.g. Alex Morgan"></label><label>Company<input name="company" placeholder="Company name"></label><label>Email<input name="email" type="email" autocomplete="email" placeholder="name@company.com"></label><label>Phone<input name="phone" type="tel" autocomplete="tel" placeholder="Phone number"></label><label>Source<select name="source"><option>Manual entry</option><option>Referral</option><option>Website form</option><option>Event</option></select></label><label>Owner<select name="owner"><option>Jordan Lee</option><option>Priya Shah</option></select></label></div><p class="form-note">Consent starts as unknown. Adding a contact will not start outreach.</p><div class="modal-actions"><button class="secondary" value="cancel" formnovalidate>Cancel</button><button class="primary" value="save">Add contact</button></div></form></dialog>
+  <section id="call-script-window" class="call-script-window" role="dialog" aria-modal="false" aria-labelledby="call-script-title" hidden>
+    <header id="call-script-handle" class="call-script-handle" tabindex="0" aria-label="Move call script with arrow keys or drag">
+      <div><span class="eyebrow">SALES GUIDE</span><h2 id="call-script-title">Call script</h2></div>
+      <button id="call-script-close" class="close" type="button" aria-label="Close call script">×</button>
+    </header>
+    <div class="call-script-body">
+      <p class="script-caution">Draft guide. Use your approved disclosures and adapt the wording to the contact and campaign.</p>
+      <section><h3>1. Open</h3><p>“Hi, is this [name]? This is [your name] with [company]. Is now a good time for a brief conversation?”</p></section>
+      <section><h3>2. Reason for calling</h3><p>“I’m reaching out because [specific, accurate reason]. I’d like to learn whether this is relevant to your team.”</p></section>
+      <section><h3>3. Discover</h3><ul><li>“How are you handling [topic] today?”</li><li>“What is working well, and what would you change?”</li><li>“Who else is involved in deciding next steps?”</li></ul></section>
+      <section><h3>4. Recap and next step</h3><p>“What I heard is [summary]. Would it be useful to schedule [specific next step]?” Confirm the time and preferred follow-up channel.</p></section>
+      <section><h3>If they decline or opt out</h3><p>Thank them, stop the pitch, and record the opt-out or Do Not Call request immediately.</p></section>
+    </div>
+  </section>
 </body>
 </html>
