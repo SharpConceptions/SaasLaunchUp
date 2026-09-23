@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101c32">
+  <meta name="description" content="NectCon CRM workspace for contacts, sales, communications, and growth.">
+  <title>NectCon · Sales workspace</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='17' fill='%23101c32'/%3E%3Cpath d='M16 46V18h8l16 17V18h8v28h-8L24 29v17z' fill='%238fd9d3'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="extra.css">
+  <script src="app.js" defer></script>
+  <script src="views.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark">N</span><span>NectCon</span></div>
+      <nav class="categories" aria-label="Main categories">
+        <button class="category active" data-category="Sales">Sales</button>
+        <button class="category" data-category="Communications">Communications</button>
+        <button class="category" data-category="Funnels & Automation">Funnels & Automation</button>
+        <button class="category" data-category="Calendars">Calendars</button>
+        <button class="category" data-category="Reputation">Reputation</button>
+        <button class="category" data-category="Social Media">Social Media</button>
+        <button class="category" data-category="Ads">Ads</button>
+        <button class="category" data-category="Reporting">Reporting</button>
+        <button class="category" data-category="Settings">Settings</button>
+      </nav>
+      <button class="account" type="button" aria-label="Current workspace: Northstar Studio">NS</button>
+    </header>
+    <div class="layout">
+      <aside class="workspace" aria-label="Workspace navigation">
+        <div class="workspace-heading"><span class="eyebrow">WORKSPACE</span><strong id="workspace-title">Sales</strong></div>
+        <nav id="workspace-nav" class="workspace-nav" aria-label="Sales views"></nav>
+        <div class="workspace-bottom"><span class="demo-pill">DEMO WORKSPACE</span><p>Explore with sample records. Outbound services are disabled.</p></div>
+      </aside>
+      <main id="main" class="main"></main>
+      <aside id="detail" class="detail" aria-label="Details" hidden></aside>
+    </div>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <dialog id="contact-dialog" class="modal"><form method="dialog" id="contact-form"><div class="modal-head"><div><span class="eyebrow">SALES</span><h2>New contact</h2></div><button class="close" value="cancel" formnovalidate aria-label="Close">×</button></div><div class="form-grid"><label>Full name<input name="name" required autocomplete="name" placeholder="e.g. Alex Morgan"></label><label>Company<input name="company" placeholder="Company name"></label><label>Email<input name="email" type="email" autocomplete="email" placeholder="name@company.com"></label><label>Phone<input name="phone" type="tel" autocomplete="tel" placeholder="Phone number"></label><label>Source<select name="source"><option>Manual entry</option><option>Referral</option><option>Website form</option><option>Event</option></select></label><label>Owner<select name="owner"><option>Jordan Lee</option><option>Priya Shah</option></select></label></div><p class="form-note">Consent starts as unknown. Adding a contact will not start outreach.</p><div class="modal-actions"><button class="secondary" value="cancel" formnovalidate>Cancel</button><button class="primary" value="save">Add contact</button></div></form></dialog>
+</body>
+</html>
