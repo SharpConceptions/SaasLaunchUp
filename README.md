@@ -1,11 +1,9 @@
-# NectCon site
+# NectCon CRM
 
-This is a private, static product demo based on the [NectCon working brief](../docs/PRODUCT_BRIEF.md). It is meant for design and workflow review.
+This repository contains the NectCon private Sites application. `/` opens the existing demonstration workspace. `/foundation` is the persistent CRM foundation backed by Cloudflare D1.
 
-The site shows the workspace navigation, sample CRM records, pipeline, tasks, dialer checks, inbox, calendar, reporting, consent, and compliance controls. New contacts and task changes exist only for the current browser session. CSV selection provides a local preview and does not import data.
+The foundation includes organizations, contacts, companies, tasks, pipelines, notes, membership checks, and an append-only audit trail. Database schema and initial migration are in `db/schema.ts` and `drizzle/`. The Sales Dialer demonstration includes a collapsible number pad and movable call script; calls remain disabled until Twilio is connected.
 
-The Sales workspace includes a modeless call-script window. Open it from the Workspace panel, drag its heading to move it, use the arrow keys when its heading is focused, and close it with the X or Escape. The wording is a draft and must be tailored and approved before use.
+Run `npm ci` and `npm run build`. After schema changes, regenerate the migration. The hosted Site is owner-private. Customer identity and invitations are not yet implemented. Do not onboard external companies until that access model is complete.
 
-See the [Sales integration setup](../docs/INTEGRATION_SETUP.md) for the accounts, backend, and release controls needed to enable live use.
-
-No authentication, tenant isolation, database, provider integration, delivery, recording, billing, audit storage, or live compliance enforcement is connected. Outbound actions remain disabled. The release gates in the brief apply before any production use.
+See `../docs/FOUNDATION_AND_INTEGRATIONS.md` for the rollout and provider requirements.

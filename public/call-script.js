@@ -1,15 +1,11 @@
 const scriptPanel = document.querySelector('#call-script-window');
 const scriptHandle = document.querySelector('#call-script-handle');
 const scriptClose = document.querySelector('#call-script-close');
-const oldRenderNav = renderNav;
+const oldRender = render;
 
-renderNav = function () {
-  oldRenderNav();
-  if (category === 'Sales') {
-    document.querySelector('#workspace-nav').insertAdjacentHTML('beforeend', '<button class="nav-btn call-script-nav" type="button" data-action="open-call-script" aria-controls="call-script-window" aria-expanded="false"><span class="nav-icon" aria-hidden="true">▤</span><span class="nav-text">Call script</span></button>');
-  } else {
-    closeCallScript();
-  }
+render = function () {
+  oldRender();
+  if (category !== 'Sales' || view !== 'Sales dialer') closeCallScript();
   syncCallScriptButton();
 };
 
