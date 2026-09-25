@@ -42,7 +42,7 @@ async function getAccessKeys(issuer: string, refresh = false): Promise<JsonWebKe
 async function verifyAccessAssertion(
   assertion: string,
   teamDomain: string,
-  audience: string,
+  audiences: string[],
 ): Promise<RequestIdentity | null> {
   try {
     const [encodedHeader, encodedClaims, encodedSignature, ...extra] = assertion.split(".");
@@ -78,8 +78,8 @@ async function verifyAccessAssertion(
     if (!verified) return null;
 
     const now = Math.floor(Date.now() / 1000);
-    const audiences = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
-    if (claims.iss !== issuer || !audiences.includes(audience)) return null;
+    const tokenAudiences = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
+    if (claims.iss !== issuer || !tokenAudiences.some(value => value && audiences.includes(value))) return null;
     if (typeof claims.exp !== "number" || claims.exp <= now) return null;
     if (typeof claims.nbf === "number" && claims.nbf > now) return null;
     if (!claims.sub || !claims.email) return null;
@@ -96,7 +96,9 @@ export async function getRequestIdentity(headers: Headers): Promise<RequestIdent
 
   if (configuration.CF_ACCESS_AUD || configuration.CF_ACCESS_TEAM_DOMAIN) {
     if (!configuration.CF_ACCESS_AUD || !configuration.CF_ACCESS_TEAM_DOMAIN || !assertion) return null;
-    return verifyAccessAssertion(assertion, configuration.CF_ACCESS_TEAM_DOMAIN, configuration.CF_ACCESS_AUD);
+    const audiences = configuration.CF_ACCESS_AUD.split(",").map(value => value.trim()).filter(Boolean);
+    if (!audiences.length) return null;
+    return verifyAccessAssertion(assertion, configuration.CF_ACCESS_TEAM_DOMAIN, audiences);
   }
 
   const userId = headers.get("oai-authenticated-user-id");
