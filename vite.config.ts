@@ -15,6 +15,10 @@ const managedLinux = readExecutionProfile() === "managed-linux";
 const localBindingConfig = {
   name: "saaslaunchupcrm",
   workers_dev: false,
+  vars: {
+    ...(process.env.CF_ACCESS_AUD ? { CF_ACCESS_AUD: process.env.CF_ACCESS_AUD } : {}),
+    ...(process.env.CF_ACCESS_TEAM_DOMAIN ? { CF_ACCESS_TEAM_DOMAIN: process.env.CF_ACCESS_TEAM_DOMAIN } : {}),
+  },
   main: "vinext/server/fetch-handler",
   compatibility_flags: ["nodejs_compat"],
   d1_databases: d1

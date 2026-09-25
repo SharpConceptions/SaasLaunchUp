@@ -1,5 +1,6 @@
 import { env } from "cloudflare:workers";
 import { z } from "zod";
+import { getRequestIdentity } from "../../../lib/access-identity";
 import { createWebsiteKey, hashWebsiteKey } from "../../../lib/website-forms";
 
 const uuid = z.string().uuid();
@@ -25,7 +26,7 @@ function fail(status: number, message: string): never { throw new ApiError(statu
 function database(): D1Database { const db = env.DB; if (!db) fail(503, "Website connection storage is unavailable."); return db; }
 async function owner(request: Request, tenantId: string) {
   if (!uuid.safeParse(tenantId).success) fail(400, "Choose a company.");
-  const userId = request.headers.get("oai-authenticated-user-id");
+  const userId = (await getRequestIdentity(request.headers))?.userId;
   if (!userId) fail(401, "Sign in to continue.");
   const member = await database().prepare("SELECT role FROM memberships WHERE tenant_id = ? AND user_id = ? AND status = 'active'")
     .bind(tenantId, userId).first<{ role: string }>();

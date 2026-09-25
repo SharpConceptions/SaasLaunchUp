@@ -1,5 +1,6 @@
 import { env } from "cloudflare:workers";
 import { z } from "zod";
+import { getRequestIdentity } from "../../../lib/access-identity";
 
 const uuid = z.string().uuid();
 const accountSid = z.string().regex(/^AC[0-9a-fA-F]{32}$/);
@@ -27,7 +28,7 @@ function db(): D1Database {
   return env.DB;
 }
 async function owner(request: Request, tenantId: string) {
-  const userId = request.headers.get("oai-authenticated-user-id");
+  const userId = (await getRequestIdentity(request.headers))?.userId;
   if (!userId) throw new ConnectionError(401, "Sign in to continue.");
   if (!uuid.safeParse(tenantId).success) throw new ConnectionError(400, "Choose a company.");
   const member = await db().prepare("SELECT role FROM memberships WHERE tenant_id = ? AND user_id = ? AND status = 'active'")

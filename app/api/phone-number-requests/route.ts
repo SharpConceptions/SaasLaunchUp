@@ -1,5 +1,6 @@
 import { env } from "cloudflare:workers";
 import { z } from "zod";
+import { getRequestIdentity } from "../../../lib/access-identity";
 
 const uuid = z.string().uuid();
 const input = z.object({
@@ -16,7 +17,7 @@ const database = () => env.DB as D1Database;
 
 async function authorize(request: Request, tenantId: string) {
   if (!uuid.safeParse(tenantId).success) return { error: reply({ error: "Choose a company." }, 400) };
-  const userId = request.headers.get("oai-authenticated-user-id");
+  const userId = (await getRequestIdentity(request.headers))?.userId;
   if (!userId) return { error: reply({ error: "Sign in to continue." }, 401) };
   if (!env.DB) return { error: reply({ error: "Request storage is unavailable." }, 503) };
   const member = await database().prepare("SELECT role FROM memberships WHERE tenant_id = ? AND user_id = ? AND status = 'active'")

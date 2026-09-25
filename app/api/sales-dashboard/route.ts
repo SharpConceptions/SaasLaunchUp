@@ -1,7 +1,8 @@
 import { env } from "cloudflare:workers";
+import { getRequestIdentity } from "../../../lib/access-identity";
 
 export async function GET(request: Request) {
-  const userId = request.headers.get("oai-authenticated-user-id");
+  const userId = (await getRequestIdentity(request.headers))?.userId;
   if (!userId) return Response.json({ error: "Sign in to continue." }, { status: 401 });
   const tenantId = new URL(request.url).searchParams.get("tenant_id");
   if (!tenantId || !/^[0-9a-f-]{36}$/i.test(tenantId)) return Response.json({ error: "Choose an organization." }, { status: 400 });

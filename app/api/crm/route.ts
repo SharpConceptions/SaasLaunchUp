@@ -1,5 +1,6 @@
 import { env } from "cloudflare:workers";
 import { z } from "zod";
+import { getRequestIdentity } from "../../../lib/access-identity";
 
 type Member = { role: string; record_scope: string; team_id: string | null };
 type Identity = { id: string; email: string | null };
@@ -37,10 +38,10 @@ const opportunityInput = tenantInput.extend({
 function json(data: unknown, status = 200) { return Response.json(data, { status, headers: { "Cache-Control": "no-store" } }); }
 function fail(status: number, message: string): never { throw new ApiError(status, message); }
 function database(): D1Database { if (!env.DB) fail(503, "CRM storage is unavailable."); return env.DB; }
-function identity(request: Request): Identity {
-  const id = request.headers.get("oai-authenticated-user-id");
-  if (!id) fail(401, "Sign in to continue.");
-  return { id, email: request.headers.get("oai-authenticated-user-email") };
+async function identity(request: Request): Promise<Identity> {
+  const user = await getRequestIdentity(request.headers);
+  if (!user) fail(401, "Sign in to continue.");
+  return { id: user.userId, email: user.email };
 }
 function validateMutation(request: Request) {
   if (request.headers.get("Origin") !== new URL(request.url).origin) fail(403, "Request origin was not accepted.");
@@ -87,7 +88,7 @@ function audit(db: D1Database, tenantId: string, actor: string, kind: string, ta
 }
 async function handle(request: Request) {
   const db = database();
-  const user = identity(request);
+  const user = await identity(request);
   const url = new URL(request.url);
   const resource = url.searchParams.get("resource");
   if (!resource) fail(400, "Choose a resource.");

@@ -1,5 +1,6 @@
 import { env } from "cloudflare:workers";
 import { z } from "zod";
+import { getRequestIdentity } from "../../../lib/access-identity";
 
 const uuid=z.string().uuid();
 const hhmm=z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
@@ -11,7 +12,7 @@ const input=z.object({
 const reply=(value:unknown,status=200)=>Response.json(value,{status,headers:{"Cache-Control":"no-store"}});
 function database():D1Database{if(!env.DB)throw new Error("Inbound call storage is unavailable.");return env.DB}
 async function access(request:Request,tenantId:string,write=false){
-  const userId=request.headers.get("oai-authenticated-user-id");if(!userId)return {error:reply({error:"Sign in to continue."},401)};
+  const userId=(await getRequestIdentity(request.headers))?.userId;if(!userId)return {error:reply({error:"Sign in to continue."},401)};
   if(!uuid.safeParse(tenantId).success)return {error:reply({error:"Choose an organization."},400)};
   if(!env.DB)return {error:reply({error:"Inbound call storage is unavailable."},503)};
   const member=await database().prepare("SELECT role FROM memberships WHERE tenant_id = ? AND user_id = ? AND status = 'active'").bind(tenantId,userId).first<{role:string}>();

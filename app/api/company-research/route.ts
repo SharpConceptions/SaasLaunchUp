@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { env } from "cloudflare:workers";
+import { getRequestIdentity } from "../../../lib/access-identity";
 
 const input = z.object({ website: z.string().trim().min(4).max(253), tenant_id: z.string().uuid().optional(), company_id: z.string().uuid().optional() }).strict();
 const blockedSuffixes = [".localhost", ".local", ".internal", ".test", ".example", ".invalid", ".onion", ".lan", ".corp", ".nip.io", ".sslip.io", ".xip.io", ".localtest.me", ".lvh.me", ".traefik.me"];
@@ -41,7 +42,7 @@ function information(html: string) {
   return { title, description: description?.slice(0, 360) || "" };
 }
 export async function POST(request: Request) {
-  const userId = request.headers.get("oai-authenticated-user-id");
+  const userId = (await getRequestIdentity(request.headers))?.userId;
   if (!userId) return response({ error: "Sign in to research a company." }, 401);
   if (request.headers.get("Origin") !== new URL(request.url).origin) return response({ error: "Request origin was not accepted." }, 403);
   if (!request.headers.get("Content-Type")?.startsWith("application/json")) return response({ error: "Send JSON data." }, 415);

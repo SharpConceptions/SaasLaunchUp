@@ -1,5 +1,6 @@
 import { env } from "cloudflare:workers";
 import { z } from "zod";
+import { getRequestIdentity } from "../../../lib/access-identity";
 
 const uuid=z.string().uuid();
 const channel=z.enum(["sms","email"]);
@@ -8,7 +9,7 @@ const deleteInput=z.object({tenant_id:uuid,id:uuid,confirmation:z.literal("delet
 const response=(value:unknown,status=200)=>Response.json(value,{status,headers:{"Cache-Control":"no-store"}});
 function database():D1Database{if(!env.DB)throw new Error("Template storage is unavailable.");return env.DB}
 async function member(request:Request,tenantId:string){
-  const userId=request.headers.get("oai-authenticated-user-id");
+  const userId=(await getRequestIdentity(request.headers))?.userId;
   if(!userId)return {error:response({error:"Sign in to continue."},401)};
   if(!uuid.safeParse(tenantId).success)return {error:response({error:"Choose an organization."},400)};
   if(!env.DB)return {error:response({error:"Template storage is unavailable."},503)};

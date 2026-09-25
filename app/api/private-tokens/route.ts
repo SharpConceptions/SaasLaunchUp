@@ -1,5 +1,6 @@
 import { env } from "cloudflare:workers";
 import { z } from "zod";
+import { getRequestIdentity } from "../../../lib/access-identity";
 import { createApiToken, hashWebsiteKey } from "../../../lib/api-tokens";
 import { implementedScopes, integrationScopeKeys, integrationScopeSet } from "../../../lib/integration-permissions";
 
@@ -20,7 +21,7 @@ function fail(status: number, message: string): never { throw new ApiError(statu
 function db(): D1Database { if (!env.DB) fail(503, "Token storage is unavailable."); return env.DB; }
 async function owner(request: Request, tenantId: string) {
   if (!uuid.safeParse(tenantId).success) fail(400, "Choose a company.");
-  const userId = request.headers.get("oai-authenticated-user-id");
+  const userId = (await getRequestIdentity(request.headers))?.userId;
   if (!userId) fail(401, "Sign in to continue.");
   const row = await db().prepare("SELECT role FROM memberships WHERE tenant_id = ? AND user_id = ? AND status = 'active'")
     .bind(tenantId, userId).first<{ role: string }>();

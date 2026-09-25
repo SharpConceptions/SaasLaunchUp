@@ -1,5 +1,6 @@
 import { env } from "cloudflare:workers";
 import { z } from "zod";
+import { getRequestIdentity } from "../../../lib/access-identity";
 
 const kinds = ["email", "board", "media", "blog", "scan"] as const;
 const uuid = z.string().uuid();
@@ -12,7 +13,7 @@ async function membership(db:D1Database,tenantId:string,userId:string){
   return db.prepare("SELECT role FROM memberships WHERE tenant_id = ? AND user_id = ? AND status = 'active'").bind(tenantId,userId).first<{role:string}>();
 }
 async function handle(request:Request){
-  const userId=request.headers.get("oai-authenticated-user-id");
+  const userId=(await getRequestIdentity(request.headers))?.userId;
   if(!userId)return reply({error:"Sign in to use Marketing."},401);
   const db=env.DB;
   if(!db)return reply({error:"Marketing storage is unavailable."},503);

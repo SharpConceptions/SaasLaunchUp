@@ -1,5 +1,6 @@
 import { env } from "cloudflare:workers";
 import { z } from "zod";
+import { getRequestIdentity } from "../../../lib/access-identity";
 
 const input=z.object({tenant_id:z.string().uuid(),website:z.string().trim().min(4).max(500)}).strict();
 const blocked=[".localhost",".local",".internal",".test",".example",".invalid",".onion",".lan",".corp",".nip.io",".sslip.io",".xip.io",".localtest.me",".lvh.me",".traefik.me"];
@@ -49,7 +50,7 @@ function analyze(html:string,website:string){
   return {website,scanned_at:new Date().toISOString(),title,seo,geo,aeo,summary:{seo:seo.filter(x=>x.status==="pass").length,geo:geo.filter(x=>x.status==="pass").length,aeo:aeo.filter(x=>x.status==="pass").length}};
 }
 export async function POST(request:Request){
-  const userId=request.headers.get("oai-authenticated-user-id");if(!userId)return reply({error:"Sign in to scan a website."},401);
+  const userId=(await getRequestIdentity(request.headers))?.userId;if(!userId)return reply({error:"Sign in to scan a website."},401);
   if(request.headers.get("Origin")!==new URL(request.url).origin)return reply({error:"Request origin was not accepted."},403);
   if(!request.headers.get("Content-Type")?.startsWith("application/json"))return reply({error:"Send JSON data."},415);
   const raw=await request.text();if(raw.length>1200)return reply({error:"Request is too large."},413);

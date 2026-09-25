@@ -1,5 +1,6 @@
 import { env } from "cloudflare:workers";
 import { z } from "zod";
+import { getRequestIdentity } from "../../../lib/access-identity";
 
 const purchaseInput = z.object({
   tenant_id: z.string().uuid(), type: z.literal("purchase"), customer_name: z.string().trim().min(1).max(160),
@@ -16,7 +17,7 @@ const subscriptionInput = z.object({ tenant_id: z.string().uuid(), type: z.liter
 function reply(data: unknown, status = 200) { return Response.json(data, { status, headers: { "Cache-Control": "no-store" } }); }
 function database(): D1Database { if (!env.DB) throw new Error("CRM storage is unavailable."); return env.DB; }
 async function authorize(request: Request, tenantId: string) {
-  const userId = request.headers.get("oai-authenticated-user-id");
+  const userId = (await getRequestIdentity(request.headers))?.userId;
   if (!userId) return { error: reply({ error: "Sign in to continue." }, 401) };
   if (!z.string().uuid().safeParse(tenantId).success) return { error: reply({ error: "Choose an organization." }, 400) };
   if (!env.DB) return { error: reply({ error: "CRM storage is unavailable." }, 503) };
