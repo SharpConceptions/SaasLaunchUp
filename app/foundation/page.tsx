@@ -5,12 +5,12 @@ import "./workspace.css";
 
 type Organization = { id: string; name: string; legal_name: string | null; primary_domain: string | null; timezone: string; role: string };
 type Contact = { id: string; name: string; email: string | null; phone: string | null; lifecycle_stage: string; company_name: string | null; source: string | null };
-type Company = { id: string; name: string; domain: string | null };
+type Company = { id: string; name: string; domain: string | null; research_summary: string | null; research_source_url: string | null; researched_at: string | null };
 type Task = { id: string; title: string; status: string; due_at: string | null };
 type Stage = { pipeline_id: string; pipeline_name: string; stage_id: string; stage_name: string; position: number };
 type Audit = { id: string; kind: string; target_type: string; created_at: string };
-type Tab = "Contacts" | "Companies" | "Pipeline" | "Tasks" | "Organization" | "Audit history";
-const tabs: Tab[] = ["Contacts", "Companies", "Pipeline", "Tasks", "Organization", "Audit history"];
+type Tab = "Contacts" | "Sub accounts" | "Pipeline" | "Tasks" | "Organization" | "Audit history";
+const tabs: Tab[] = ["Contacts", "Sub accounts", "Pipeline", "Tasks", "Organization", "Audit history"];
 
 async function crm(resource: string, method = "GET", tenantId?: string, data?: unknown) {
   const params = new URLSearchParams({ resource });
@@ -36,6 +36,8 @@ export default function FoundationPage() {
   const [audits, setAudits] = useState<Audit[]>([]);
   const [tab, setTab] = useState<Tab>("Contacts");
   const [formOpen, setFormOpen] = useState(false);
+  const [movingContactId, setMovingContactId] = useState<string | null>(null);
+  const [researchingCompanyId, setResearchingCompanyId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -98,7 +100,7 @@ export default function FoundationPage() {
     for (const key of Object.keys(data)) if (data[key] === "") delete data[key];
     try {
       await crm(resource, "POST", tenantId, { ...data, tenant_id: tenantId });
-      await refresh(resource); setFormOpen(false); setMessage(`${resource === "companies" ? "Company" : resource === "contacts" ? "Contact" : "Task"} saved.`);
+      await refresh(resource); setFormOpen(false); setMessage(`${resource === "companies" ? "Sub account" : resource === "contacts" ? "Contact" : "Task"} saved.`);
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not save the record."); }
     finally { setSaving(false); }
   }
@@ -112,11 +114,32 @@ export default function FoundationPage() {
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not save company information."); }
     finally { setSaving(false); }
   }
+  async function moveContact(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); if (!tenantId || !movingContactId) return;
+    setSaving(true); setError("");
+    const stageId = String(new FormData(event.currentTarget).get("stage_id") || "");
+    try {
+      await crm("contacts", "PATCH", tenantId, { tenant_id: tenantId, contact_id: movingContactId, stage_id: stageId });
+      await refresh("contacts"); setMovingContactId(null); setMessage("Contact moved to the new stage.");
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not move the contact."); }
+    finally { setSaving(false); }
+  }
+  async function researchCompany(company: Company) {
+    if (!tenantId || !company.domain) return;
+    setResearchingCompanyId(company.id); setError(""); setMessage("");
+    try {
+      const result = await fetch("/api/company-research", { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "same-origin", body: JSON.stringify({ website: company.domain, tenant_id: tenantId, company_id: company.id }) });
+      const data = await result.json() as { error?: string };
+      if (!result.ok) throw new Error(data.error || "Could not research this website.");
+      await refresh("companies"); setMessage(`Company information found for ${company.name}. Review the source before using it in a call.`);
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not research this website."); }
+    finally { setResearchingCompanyId(null); }
+  }
 
   return <div className="nc-app">
-    <header className="nc-top"><div className="nc-brand"><span>N</span>NectCon</div><div className="nc-top-label">CRM foundation</div><a href="/workspace.html">Sales experience preview</a></header>
+    <header className="nc-top"><div className="nc-brand"><span>SL</span>SaaS Launchup</div><div className="nc-top-label">Admin center</div><a href="/workspace.html">Sales experience preview</a></header>
     <div className="nc-frame">
-      <aside className="nc-side"><small>WORKSPACE</small><strong>{organization?.name || "Your company"}</strong><nav aria-label="CRM views">{tabs.map(item => <button key={item} type="button" className={tab===item?"active":""} onClick={()=>{setTab(item);setFormOpen(false);setMessage("");}}>{item}</button>)}</nav><p>Private pilot workspace. Calling, SMS, and email are off.</p></aside>
+      <aside className="nc-side"><small>WORKSPACE</small><strong>{organization?.name || "Your company"}</strong><nav aria-label="Admin center views">{tabs.map(item => <button key={item} type="button" className={tab===item?"active":""} onClick={()=>{setTab(item);setFormOpen(false);setMessage("");}}>{item}</button>)}</nav><p>Private pilot workspace. Calling, SMS, and email are off.</p></aside>
       <main className="nc-main">
         {loading ? <div className="nc-card">Loading your workspace…</div> : null}
         {needsSignIn ? <div className="nc-card"><h1>Sign in to continue</h1><p>Use your authorized account to open this workspace.</p><a className="nc-primary" href="/signin-with-chatgpt?return_to=%2Ffoundation" target="_top">Sign in</a></div> : null}
@@ -124,15 +147,15 @@ export default function FoundationPage() {
         {message ? <div className="nc-success" role="status">{message}</div> : null}
         {!loading && !needsSignIn && !tenantId ? <section className="nc-card nc-onboard"><small>FIRST STEP</small><h1>Create your company workspace</h1><p>Start with the company that will own the CRM records. Domain information is saved for later verification; this step does not change DNS or send messages.</p><form onSubmit={createOrganization} className="nc-form"><label>Company name<input name="name" required maxLength={160} placeholder="Your company" /></label><label>Legal business name<input name="legal_name" maxLength={160} /></label><label>Primary domain<input name="primary_domain" maxLength={253} placeholder="example.com" /></label><label>Timezone<input name="timezone" required defaultValue="America/Chicago" /></label><button className="nc-primary" disabled={saving}>Create workspace</button></form></section> : null}
         {tenantId && organization ? <>
-          <div className="nc-heading"><div><span className="nc-eyebrow">{organization.name.toUpperCase()}</span><h1>{tab}</h1><p>{tab === "Organization" ? "Company information for future domain and provider setup" : "Records saved to your private workspace"}</p></div>{(["Contacts","Companies","Tasks"] as Tab[]).includes(tab) ? <button className="nc-primary" onClick={()=>setFormOpen(open=>!open)}>{formOpen?"Close form":`＋ New ${tab.slice(0,-1).toLowerCase()}`}</button> : null}</div>
+          <div className="nc-heading"><div><span className="nc-eyebrow">{organization.name.toUpperCase()}</span><h1>{tab}</h1><p>{tab === "Organization" ? "Company information for future domain and provider setup" : "Records saved to your private workspace"}</p></div>{(["Contacts","Sub accounts","Tasks"] as Tab[]).includes(tab) ? <button className="nc-primary" onClick={()=>setFormOpen(open=>!open)}>{formOpen?"Close form":`＋ New ${tab.slice(0,-1).toLowerCase()}`}</button> : null}</div>
           <div className="nc-org-switch"><label>Company workspace <select value={tenantId} onChange={event=>setTenantId(event.target.value)}>{organizations.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}</select></label></div>
           {formOpen && tab === "Contacts" ? <form className="nc-card nc-form" onSubmit={event=>createRecord(event,"contacts")}><h2>New contact</h2><div className="nc-fields"><label>Full name<input name="name" required maxLength={160}/></label><label>Company<select name="company_id"><option value="">None</option>{companies.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}</select></label><label>Email<input name="email" type="email" /></label><label>Phone<input name="phone" type="tel" /></label><label>Timezone<input name="timezone" placeholder="America/Chicago" /></label><label>Source<input name="source" /></label></div><p>Consent begins as unknown. Saving a contact never starts outreach.</p><button className="nc-primary" disabled={saving}>Save contact</button></form> : null}
-          {formOpen && tab === "Companies" ? <form className="nc-card nc-form" onSubmit={event=>createRecord(event,"companies")}><h2>New company</h2><div className="nc-fields"><label>Company name<input name="name" required maxLength={160}/></label><label>Domain<input name="domain" placeholder="example.com" /></label></div><button className="nc-primary" disabled={saving}>Save company</button></form> : null}
+          {formOpen && tab === "Sub accounts" ? <form className="nc-card nc-form" onSubmit={event=>createRecord(event,"companies")}><h2>New sub account</h2><div className="nc-fields"><label>Sub account name<input name="name" required maxLength={160}/></label><label>Domain<input name="domain" placeholder="example.com" /></label></div><button className="nc-primary" disabled={saving}>Save sub account</button></form> : null}
           {formOpen && tab === "Tasks" ? <form className="nc-card nc-form" onSubmit={event=>createRecord(event,"tasks")}><h2>New task</h2><div className="nc-fields"><label>Task<input name="title" required maxLength={240}/></label><label>Contact<select name="contact_id"><option value="">None</option>{contacts.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}</select></label><label>Due date<input name="due_at" type="date" /></label></div><button className="nc-primary" disabled={saving}>Save task</button></form> : null}
           {tab === "Contacts" ? <div className="nc-card nc-list">{contacts.length ? contacts.map(item=><div className="nc-row" key={item.id}><span className="nc-avatar">{item.name.split(" ").map(x=>x[0]).slice(0,2).join("")}</span><div><strong>{item.name}</strong><small>{item.company_name || "No company"} · {item.email || "No email"}</small></div><span className="nc-tag">{item.lifecycle_stage}</span></div>) : <div className="nc-empty">No contacts yet. Add your first contact when you are ready.</div>}</div> : null}
-          {tab === "Companies" ? <div className="nc-card nc-list">{companies.length ? companies.map(item=><div className="nc-row" key={item.id}><div><strong>{item.name}</strong><small>{item.domain || "No domain entered"}</small></div></div>) : <div className="nc-empty">No companies yet.</div>}</div> : null}
+          {tab === "Sub accounts" ? <div className="nc-card nc-list">{companies.length ? companies.map(item=><div className="nc-row nc-company-row" key={item.id}><div><strong>{item.name}</strong><small>{item.domain || "No domain entered"}</small>{item.research_summary ? <><p>{item.research_summary}</p>{item.research_source_url ? <a href={item.research_source_url} target="_blank" rel="noopener noreferrer">Source website</a> : null}</> : null}</div><button type="button" disabled={!item.domain || researchingCompanyId===item.id} onClick={()=>void researchCompany(item)}>{researchingCompanyId===item.id?"Researching…":"Research website"}</button></div>) : <div className="nc-empty">No sub accounts yet.</div>}</div> : null}
           {tab === "Tasks" ? <div className="nc-card nc-list">{tasks.length ? tasks.map(item=><div className="nc-row" key={item.id}><div><strong>{item.title}</strong><small>{item.due_at || "No due date"}</small></div><span className="nc-tag">{item.status}</span></div>) : <div className="nc-empty">No tasks yet.</div>}</div> : null}
-          {tab === "Pipeline" ? <div className="nc-pipeline">{stages.map(item=><section className="nc-card" key={item.stage_id}><h2>{item.stage_name}</h2><p>No opportunities in this stage yet.</p></section>)}</div> : null}
+          {tab === "Pipeline" ? <><div className="nc-pipeline">{stages.map(stage=><section className="nc-card" key={stage.stage_id}><h2>{stage.stage_name} <span>({contacts.filter(item=>item.lifecycle_stage===stage.stage_name).length})</span></h2>{contacts.filter(item=>item.lifecycle_stage===stage.stage_name).length ? contacts.filter(item=>item.lifecycle_stage===stage.stage_name).map(item=><button className="nc-pipeline-contact" type="button" key={item.id} onClick={()=>setMovingContactId(item.id)}><strong>{item.name}</strong><small>{item.company_name || "No company"}</small></button>) : <p>No contacts in this stage.</p>}</section>)}</div>{movingContactId ? <form className="nc-card nc-form nc-move" onSubmit={moveContact}><h2>Move {contacts.find(item=>item.id===movingContactId)?.name}</h2><label>Pipeline stage<select name="stage_id" defaultValue={stages.find(stage=>stage.stage_name===contacts.find(item=>item.id===movingContactId)?.lifecycle_stage)?.stage_id || stages[0]?.stage_id}>{stages.map(stage=><option key={stage.stage_id} value={stage.stage_id}>{stage.stage_name}</option>)}</select></label><div className="nc-move-actions"><button className="nc-primary" disabled={saving}>Move contact</button><button type="button" onClick={()=>setMovingContactId(null)}>Cancel</button></div></form> : null}</> : null}
           {tab === "Organization" ? <form className="nc-card nc-form nc-profile" onSubmit={updateOrganization}><h2>Company profile</h2><p>These details belong to this workspace. DNS changes and provider purchases require a separate authorization flow.</p><div className="nc-fields"><label>Company name<input name="name" defaultValue={organization.name} required maxLength={160}/></label><label>Legal business name<input name="legal_name" defaultValue={organization.legal_name || ""} maxLength={160}/></label><label>Primary domain<input name="primary_domain" defaultValue={organization.primary_domain || ""} maxLength={253}/></label><label>Timezone<input name="timezone" defaultValue={organization.timezone} required /></label></div><button className="nc-primary" disabled={saving}>Save company profile</button></form> : null}
           {tab === "Audit history" ? <div className="nc-card nc-list">{audits.length ? audits.map(item=><div className="nc-row" key={item.id}><div><strong>{item.kind.replace("."," · ")}</strong><small>{item.target_type} · {item.created_at}</small></div></div>) : <div className="nc-empty">No audit events yet.</div>}</div> : null}
         </> : null}

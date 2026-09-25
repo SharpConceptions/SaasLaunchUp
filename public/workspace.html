@@ -4,40 +4,83 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101c32">
-  <meta name="description" content="NectCon CRM workspace for contacts, sales, communications, and growth.">
-  <title>NectCon · Sales workspace</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='17' fill='%23101c32'/%3E%3Cpath d='M16 46V18h8l16 17V18h8v28h-8L24 29v17z' fill='%238fd9d3'/%3E%3C/svg%3E">
+  <meta name="description" content="SaaS Launchup CRM workspace for contacts, sales, communications, and growth.">
+  <title>SaaS Launchup · Workspace</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="extra.css">
   <link rel="stylesheet" href="call-script.css">
   <link rel="stylesheet" href="dialer.css">
+  <link rel="stylesheet" href="contact-delete.css">
+  <link rel="stylesheet" href="contact-activity.css">
+  <link rel="stylesheet" href="pipeline-research.css">
+  <link rel="stylesheet" href="sales-dashboard.css">
+  <link rel="stylesheet" href="admin-dashboard.css">
+  <link rel="stylesheet" href="sales-notes.css">
+  <link rel="stylesheet" href="marketing.css">
+  <link rel="stylesheet" href="pipeline-builder.css">
+  <link rel="stylesheet" href="service.css">
+  <link rel="stylesheet" href="communications.css">
+  <link rel="stylesheet" href="navigation.css">
+  <link rel="stylesheet" href="profile-menu.css">
+  <link rel="stylesheet" href="integrations.css">
+  <link rel="stylesheet" href="website-forms.css">
+  <link rel="stylesheet" href="private-tokens.css">
+  <link rel="stylesheet" href="typography.css">
   <script src="app.js" defer></script>
   <script src="views.js" defer></script>
+  <script src="admin-dashboard.js" defer></script>
+  <script src="sales-notes.js" defer></script>
+  <script src="marketing.js" defer></script>
+  <script src="pipeline-builder.js" defer></script>
+  <script src="service.js" defer></script>
+  <script src="communications.js" defer></script>
   <script src="call-script.js" defer></script>
+  <script src="profile-menu.js" defer></script>
+  <script src="integrations.js" defer></script>
+  <script src="website-forms.js" defer></script>
+  <script src="private-tokens.js" defer></script>
 </head>
 <body>
   <div class="app-shell">
+    <header class="utility-bar">
+      <a class="utility-brand" href="/workspace" aria-label="SaaS Launchup workspace"><span class="utility-mark" aria-hidden="true">SL</span><span>SaaS Launchup</span></a>
+      <div class="profile-menu" id="profile-menu">
+        <button class="account" id="profile-trigger" type="button" aria-label="Open profile menu" aria-haspopup="menu" aria-controls="profile-dropdown" aria-expanded="false">NS</button>
+        <div class="profile-dropdown" id="profile-dropdown" role="menu" aria-label="Account menu" hidden>
+          <span class="profile-menu-label" id="profile-menu-name">YOUR ACCOUNT</span>
+          <button type="button" role="menuitem" data-settings-view="Profile">Profile</button>
+          <button type="button" role="menuitem" data-settings-view="Organization">Settings</button>
+          <button type="button" role="menuitem" data-settings-view="Billing">Billing</button>
+          <button type="button" role="menuitem" data-settings-view="Reporting">Reports</button>
+          <span class="profile-menu-divider" aria-hidden="true"></span>
+          <span class="profile-menu-label">WORKSPACE SETUP</span>
+          <button type="button" role="menuitem" data-settings-view="Custom Integrations">Custom Integrations</button>
+          <button type="button" role="menuitem" data-settings-view="API connections">API connections</button>
+          <button type="button" role="menuitem" data-settings-view="Domain & DNS">Domain &amp; DNS</button>
+          <button type="button" role="menuitem" data-settings-view="Team & roles">Team &amp; roles</button>
+          <button type="button" role="menuitem" data-settings-view="Compliance controls">Compliance</button>
+          <a role="menuitem" href="/foundation" data-owner-only>Admin center</a>
+        </div>
+      </div>
+    </header>
     <header class="topbar">
-      <div class="brand"><span class="brand-mark">N</span><span>NectCon</span></div>
-      <nav class="categories" aria-label="Main categories">
-        <button class="category active" data-category="Sales">Sales</button>
-        <button class="category" data-category="Communications">Communications</button>
+      <nav class="categories" aria-label="Main sections">
+        <button class="category active" data-category="Dashboard">Dashboard</button>
+        <button class="category" data-category="Sales">Sales</button>
+        <button class="category" data-category="Marketing">Marketing</button>
         <button class="category" data-category="Funnels & Automation">Funnels & Automation</button>
         <button class="category" data-category="Calendars">Calendars</button>
-        <button class="category" data-category="Reputation">Reputation</button>
-        <button class="category" data-category="Social Media">Social Media</button>
+        <button class="category" data-category="Customer service">Customer service</button>
         <button class="category" data-category="Ads">Ads</button>
-        <button class="category" data-category="Reporting">Reporting</button>
-        <button class="category" data-category="Settings">Settings</button>
       </nav>
-      <a class="foundation-link" href="/foundation">CRM foundation</a>
-      <button class="account" type="button" aria-label="Current workspace: Northstar Studio">NS</button>
     </header>
     <div class="layout">
       <aside class="workspace" aria-label="Workspace navigation">
-        <div class="workspace-heading"><span class="eyebrow">WORKSPACE</span><strong id="workspace-title">Sales</strong></div>
-        <nav id="workspace-nav" class="workspace-nav" aria-label="Sales views"></nav>
-        <div class="workspace-bottom"><span class="demo-pill">DEMO WORKSPACE</span><p>Explore with sample records. Outbound services are disabled.</p></div>
+        <div class="workspace-scroll">
+          <nav id="workspace-nav" class="workspace-nav" aria-label="Sales views"></nav>
+        </div>
+        <div class="workspace-bottom"><p class="workspace-copyright">SaaS Launchup™<br>Copyright © 2026 SCDA LLC.<br>All rights reserved.</p></div>
       </aside>
       <main id="main" class="main"></main>
       <aside id="detail" class="detail" aria-label="Details" hidden></aside>
@@ -45,6 +88,11 @@
   </div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <dialog id="contact-dialog" class="modal"><form method="dialog" id="contact-form"><div class="modal-head"><div><span class="eyebrow">SALES</span><h2>New contact</h2></div><button class="close" value="cancel" formnovalidate aria-label="Close">×</button></div><div class="form-grid"><label>Full name<input name="name" required autocomplete="name" placeholder="e.g. Alex Morgan"></label><label>Company<input name="company" placeholder="Company name"></label><label>Email<input name="email" type="email" autocomplete="email" placeholder="name@company.com"></label><label>Phone<input name="phone" type="tel" autocomplete="tel" placeholder="Phone number"></label><label>Source<select name="source"><option>Manual entry</option><option>Referral</option><option>Website form</option><option>Event</option></select></label><label>Owner<select name="owner"><option>Jordan Lee</option><option>Priya Shah</option></select></label></div><p class="form-note">Consent starts as unknown. Adding a contact will not start outreach.</p><div class="modal-actions"><button class="secondary" value="cancel" formnovalidate>Cancel</button><button class="primary" value="save">Add contact</button></div></form></dialog>
+  <dialog id="delete-contact-dialog" class="modal delete-confirm-dialog" aria-labelledby="delete-contact-title" aria-describedby="delete-contact-warning"><form id="delete-contact-form"><div class="modal-head"><div><span class="eyebrow">CONTACT</span><h2 id="delete-contact-title">Delete contact?</h2></div><button class="close" type="submit" value="cancel" formnovalidate aria-label="Close">×</button></div><p id="delete-contact-warning">Deleting <strong id="delete-contact-name"></strong> is irreversible. This contact will be removed from the workspace.</p><label class="delete-confirm-label" for="delete-confirmation">Type <strong>delete</strong> to confirm<input id="delete-confirmation" type="text" autocomplete="off" spellcheck="false" aria-label="Type delete to confirm"></label><div class="modal-actions"><button class="secondary" type="submit" value="cancel" formnovalidate>Cancel</button><button class="delete-contact-submit" id="confirm-delete-contact" type="submit" value="delete" disabled>Delete contact</button></div></form></dialog>
+  <dialog id="pipeline-move-dialog" class="modal" aria-labelledby="pipeline-move-title"><form id="pipeline-move-form"><div class="modal-head"><div><span class="eyebrow">PIPELINE</span><h2 id="pipeline-move-title">Move contact</h2></div><button class="close" type="submit" value="cancel" formnovalidate aria-label="Close">×</button></div><p class="form-note" id="pipeline-move-contact"></p><label class="pipeline-stage-label" for="pipeline-stage">Move to stage<select id="pipeline-stage" name="stage" required><option>New lead</option><option>Contacted</option><option>Qualified</option><option>Proposal</option></select></label><p id="pipeline-move-error" class="pipeline-move-error" role="alert" hidden></p><div class="modal-actions"><button class="secondary" type="submit" value="cancel" formnovalidate>Cancel</button><button class="primary" type="submit" value="move">Move contact</button></div></form></dialog>
+  <dialog id="admin-opportunity-dialog" class="modal admin-opportunity-dialog" aria-labelledby="admin-opportunity-title"><form id="admin-opportunity-form"><div class="modal-head"><div><span class="eyebrow">SALES PIPELINE</span><h2 id="admin-opportunity-title">New opportunity</h2></div><button class="close" type="submit" value="cancel" formnovalidate aria-label="Close">×</button></div><input type="hidden" name="id"><div class="form-grid"><label>Opportunity<input name="title" required maxlength="240" placeholder="e.g. Annual CRM plan"></label><label>Amount (USD)<input name="value" required type="number" min="0" max="1000000000" step="0.01" placeholder="0.00"></label><label>Contact<select name="contact_id"></select></label><label>Company<select name="company_id"></select></label><label>Stage<select name="stage_id" required></select></label><label>Status<select name="status"><option value="open">Open</option><option value="won">Won</option><option value="lost">Lost</option></select></label><label>Deal type<input name="deal_type" maxlength="100" placeholder="e.g. New business"></label><label>Outcome reason<input name="outcome_reason" maxlength="300" placeholder="e.g. Pricing fit"></label></div><p class="form-note">A won deal records a sales outcome. Verify payment separately.</p><p id="admin-opportunity-error" class="pipeline-move-error" role="alert" hidden></p><div class="modal-actions"><button class="secondary" type="submit" value="cancel" formnovalidate>Cancel</button><button class="primary" type="submit" value="save">Save opportunity</button></div></form></dialog>
+  <dialog id="admin-insight-dialog" class="modal admin-opportunity-dialog" aria-labelledby="admin-insight-title"><form id="admin-insight-form"><div class="modal-head"><div><span class="eyebrow">CUSTOMER JOURNEY</span><h2 id="admin-insight-title">Record purchase</h2></div><button class="close" type="submit" value="cancel" formnovalidate aria-label="Close">×</button></div><input type="hidden" name="type"><div id="admin-purchase-fields" data-insight-fields="purchase" class="form-grid"><label>Customer<input name="purchase_customer" data-required maxlength="160"></label><label>Product<input name="product_name" data-required maxlength="160"></label><label>Order or subscription ID<input name="reference" data-required minlength="3" maxlength="160"></label><label>Purchase date<input name="purchased_at" data-required type="date"></label><label>Paid amount (USD)<input name="amount" data-required type="number" min="0" step="0.01"></label><label>Monthly recurring amount (USD)<input name="monthly_amount" type="number" min="0" step="0.01" value="0"></label></div><div id="admin-feedback-fields" data-insight-fields="feedback" class="form-grid" hidden><label>Customer<input name="feedback_customer" data-required maxlength="160"></label><label>Rating<select name="rating" data-required><option value="5">5 · Excellent</option><option value="4">4 · Good</option><option value="3">3 · Okay</option><option value="2">2 · Poor</option><option value="1">1 · Very poor</option></select></label><label>Check-in date<input name="observed_at" data-required type="date"></label><label>Notes<textarea name="note" maxlength="1000" rows="3"></textarea></label></div><p class="form-note">Verify each record first. For recurring plans, use the subscription ID once to avoid counting MRR twice.</p><p id="admin-insight-error" class="pipeline-move-error" role="alert" hidden></p><div class="modal-actions"><button class="secondary" type="submit" value="cancel" formnovalidate>Cancel</button><button class="primary" type="submit" value="save">Save record</button></div></form></dialog>
+  <dialog id="admin-number-dialog" class="modal admin-opportunity-dialog" aria-labelledby="admin-number-title"><form id="admin-number-form"><div class="modal-head"><div><span class="eyebrow">WHITE-LABEL PHONE NUMBERS</span><h2 id="admin-number-title">Record number need</h2></div><button class="close" type="submit" value="cancel" formnovalidate aria-label="Close">×</button></div><div class="form-grid"><label>White-label partner<input name="partner_name" required maxlength="160" placeholder="Partner company"></label><label>Country code<input name="country" required minlength="2" maxlength="2" value="US" placeholder="US"></label><label>State or region<input name="region" maxlength="100" placeholder="Optional"></label><label>Number type<select name="number_type"><option value="local">Local</option><option value="toll_free">Toll-free</option></select></label><label>Use for<select name="capabilities"><option value="voice_sms">Voice and SMS</option><option value="voice">Voice</option><option value="sms">SMS</option></select></label><label>Notes<textarea name="notes" maxlength="1000" rows="3" placeholder="Preferred area code or other needs"></textarea></label></div><p class="form-note">This saves a request for partner review. It does not contact the partner or SaaS Launchup, charge the customer, or buy a Twilio number.</p><p id="admin-number-error" class="pipeline-move-error" role="alert" hidden></p><div class="modal-actions"><button class="secondary" type="submit" value="cancel" formnovalidate>Cancel</button><button class="primary" type="submit" value="save">Save request</button></div></form></dialog>
   <section id="call-script-window" class="call-script-window" role="dialog" aria-modal="false" aria-labelledby="call-script-title" hidden>
     <header id="call-script-handle" class="call-script-handle" tabindex="0" aria-label="Move call script with arrow keys or drag">
       <div><span class="eyebrow">SALES GUIDE</span><h2 id="call-script-title">Call script</h2></div>
@@ -53,7 +101,7 @@
     <div class="call-script-body">
       <p class="script-caution">Draft guide. Use your approved disclosures and adapt the wording to the contact and campaign.</p>
       <section><h3>1. Open</h3><p>“Hi, is this [name]? This is [your name] with [company]. Is now a good time for a brief conversation?”</p></section>
-      <section><h3>2. Reason for calling</h3><p>“I’m reaching out because [specific, accurate reason]. I’d like to learn whether this is relevant to your team.”</p></section>
+      <section><h3>2. Reason for calling</h3><p>“I see your company does: <span id="company-script-fact">[research the company website first]</span>. I’d like to learn whether this is relevant to your team.”</p><p id="company-script-source" class="script-source" hidden></p></section>
       <section><h3>3. Discover</h3><ul><li>“How are you handling [topic] today?”</li><li>“What is working well, and what would you change?”</li><li>“Who else is involved in deciding next steps?”</li></ul></section>
       <section><h3>4. Recap and next step</h3><p>“What I heard is [summary]. Would it be useful to schedule [specific next step]?” Confirm the time and preferred follow-up channel.</p></section>
       <section><h3>If they decline or opt out</h3><p>Thank them, stop the pitch, and record the opt-out or Do Not Call request immediately.</p></section>

@@ -1,0 +1,7 @@
+.lead-updates h3{margin-bottom:4px}
+.detail .lead-updates-note{margin:0 0 13px;color:#8795a3;font-size:.73rem}
+.lead-update{display:grid;gap:4px;padding:11px 12px;margin:8px 0;border:1px solid #e3ebef;border-radius:11px;background:#f8fbfc}
+.lead-update-kind{color:#17776e;font-size:.67rem;font-weight:850;text-transform:uppercase;letter-spacing:.09em}
+.lead-update strong{color:#243950;font-size:.82rem;font-weight:700;line-height:1.35}
+.lead-update small{color:#8795a4;font-size:.72rem;line-height:1.35}
+.lead-update-stage{display:flex;align-items:center;justify-content:space-between;gap:9px;padding:8px 2px 0;font-size:.78rem;color:#8493a2}

@@ -1,0 +1,502 @@
+[
+  {
+    "key": "adPublishing.readOnly",
+    "group": "adPublishing"
+  },
+  {
+    "key": "adPublishing.write",
+    "group": "adPublishing"
+  },
+  {
+    "key": "businesses.readonly",
+    "group": "businesses"
+  },
+  {
+    "key": "businesses.write",
+    "group": "businesses"
+  },
+  {
+    "key": "calendars.write",
+    "group": "calendars"
+  },
+  {
+    "key": "calendars.readonly",
+    "group": "calendars"
+  },
+  {
+    "key": "calendars/groups.readonly",
+    "group": "calendars"
+  },
+  {
+    "key": "calendars/groups.write",
+    "group": "calendars"
+  },
+  {
+    "key": "calendars/resources.readonly",
+    "group": "calendars"
+  },
+  {
+    "key": "calendars/resources.write",
+    "group": "calendars"
+  },
+  {
+    "key": "calendars/events.readonly",
+    "group": "calendars"
+  },
+  {
+    "key": "calendars/events.write",
+    "group": "calendars"
+  },
+  {
+    "key": "campaigns.readonly",
+    "group": "campaigns"
+  },
+  {
+    "key": "contacts.readonly",
+    "group": "contacts"
+  },
+  {
+    "key": "contacts.write",
+    "group": "contacts"
+  },
+  {
+    "key": "objects/schema.readonly",
+    "group": "objects"
+  },
+  {
+    "key": "objects/schema.write",
+    "group": "objects"
+  },
+  {
+    "key": "objects/record.readonly",
+    "group": "objects"
+  },
+  {
+    "key": "objects/record.write",
+    "group": "objects"
+  },
+  {
+    "key": "conversations.readonly",
+    "group": "conversations"
+  },
+  {
+    "key": "conversations.write",
+    "group": "conversations"
+  },
+  {
+    "key": "conversations/message.readonly",
+    "group": "conversations"
+  },
+  {
+    "key": "conversations/message.write",
+    "group": "conversations"
+  },
+  {
+    "key": "forms.readonly",
+    "group": "forms"
+  },
+  {
+    "key": "forms.write",
+    "group": "forms"
+  },
+  {
+    "key": "invoices.readonly",
+    "group": "invoices"
+  },
+  {
+    "key": "invoices.write",
+    "group": "invoices"
+  },
+  {
+    "key": "invoices/schedule.readonly",
+    "group": "invoices"
+  },
+  {
+    "key": "invoices/schedule.write",
+    "group": "invoices"
+  },
+  {
+    "key": "invoices/template.readonly",
+    "group": "invoices"
+  },
+  {
+    "key": "invoices/template.write",
+    "group": "invoices"
+  },
+  {
+    "key": "invoices/estimate.readonly",
+    "group": "invoices"
+  },
+  {
+    "key": "invoices/estimate.write",
+    "group": "invoices"
+  },
+  {
+    "key": "links.readonly",
+    "group": "links"
+  },
+  {
+    "key": "links.write",
+    "group": "links"
+  },
+  {
+    "key": "locations.readonly",
+    "group": "locations"
+  },
+  {
+    "key": "locations.write",
+    "group": "locations"
+  },
+  {
+    "key": "locations/customValues.readonly",
+    "group": "locations"
+  },
+  {
+    "key": "locations/customValues.write",
+    "group": "locations"
+  },
+  {
+    "key": "locations/customFields.readonly",
+    "group": "locations"
+  },
+  {
+    "key": "locations/customFields.write",
+    "group": "locations"
+  },
+  {
+    "key": "locations/tags.readonly",
+    "group": "locations"
+  },
+  {
+    "key": "locations/tags.write",
+    "group": "locations"
+  },
+  {
+    "key": "locations/templates.readonly",
+    "group": "locations"
+  },
+  {
+    "key": "locations/tasks.readonly",
+    "group": "locations"
+  },
+  {
+    "key": "medias.readonly",
+    "group": "medias"
+  },
+  {
+    "key": "medias.write",
+    "group": "medias"
+  },
+  {
+    "key": "funnels/redirect.readonly",
+    "group": "funnels"
+  },
+  {
+    "key": "funnels/redirect.write",
+    "group": "funnels"
+  },
+  {
+    "key": "funnels/page.readonly",
+    "group": "funnels"
+  },
+  {
+    "key": "funnels/funnel.readonly",
+    "group": "funnels"
+  },
+  {
+    "key": "funnels/pagecount.readonly",
+    "group": "funnels"
+  },
+  {
+    "key": "opportunities.readonly",
+    "group": "opportunities"
+  },
+  {
+    "key": "opportunities.write",
+    "group": "opportunities"
+  },
+  {
+    "key": "payments/integration.readonly",
+    "group": "payments"
+  },
+  {
+    "key": "payments/integration.write",
+    "group": "payments"
+  },
+  {
+    "key": "payments/orders.readonly",
+    "group": "payments"
+  },
+  {
+    "key": "payments/orders.write",
+    "group": "payments"
+  },
+  {
+    "key": "payments/transactions.readonly",
+    "group": "payments"
+  },
+  {
+    "key": "payments/subscriptions.readonly",
+    "group": "payments"
+  },
+  {
+    "key": "payments/coupons.readonly",
+    "group": "payments"
+  },
+  {
+    "key": "payments/coupons.write",
+    "group": "payments"
+  },
+  {
+    "key": "payments/custom-provider.readonly",
+    "group": "payments"
+  },
+  {
+    "key": "payments/custom-provider.write",
+    "group": "payments"
+  },
+  {
+    "key": "products.readonly",
+    "group": "products"
+  },
+  {
+    "key": "products.write",
+    "group": "products"
+  },
+  {
+    "key": "products/prices.readonly",
+    "group": "products"
+  },
+  {
+    "key": "products/prices.write",
+    "group": "products"
+  },
+  {
+    "key": "products/collection.readonly",
+    "group": "products"
+  },
+  {
+    "key": "products/collection.write",
+    "group": "products"
+  },
+  {
+    "key": "oauth.readonly",
+    "group": "oauth"
+  },
+  {
+    "key": "oauth.write",
+    "group": "oauth"
+  },
+  {
+    "key": "saas/location.write",
+    "group": "saas"
+  },
+  {
+    "key": "saas/location.read",
+    "group": "saas"
+  },
+  {
+    "key": "saas/company.write",
+    "group": "saas"
+  },
+  {
+    "key": "snapshots.readonly",
+    "group": "snapshots"
+  },
+  {
+    "key": "snapshots.write",
+    "group": "snapshots"
+  },
+  {
+    "key": "socialplanner/account.readonly",
+    "group": "socialplanner"
+  },
+  {
+    "key": "socialplanner/account.write",
+    "group": "socialplanner"
+  },
+  {
+    "key": "socialplanner/csv.readonly",
+    "group": "socialplanner"
+  },
+  {
+    "key": "socialplanner/csv.write",
+    "group": "socialplanner"
+  },
+  {
+    "key": "socialplanner/category.readonly",
+    "group": "socialplanner"
+  },
+  {
+    "key": "socialplanner/oauth.readonly",
+    "group": "socialplanner"
+  },
+  {
+    "key": "socialplanner/oauth.write",
+    "group": "socialplanner"
+  },
+  {
+    "key": "socialplanner/post.readonly",
+    "group": "socialplanner"
+  },
+  {
+    "key": "socialplanner/post.write",
+    "group": "socialplanner"
+  },
+  {
+    "key": "socialplanner/tag.readonly",
+    "group": "socialplanner"
+  },
+  {
+    "key": "socialplanner/statistics.readonly",
+    "group": "socialplanner"
+  },
+  {
+    "key": "surveys.readonly",
+    "group": "surveys"
+  },
+  {
+    "key": "users.readonly",
+    "group": "users"
+  },
+  {
+    "key": "users.write",
+    "group": "users"
+  },
+  {
+    "key": "workflows.readonly",
+    "group": "workflows"
+  },
+  {
+    "key": "courses.write",
+    "group": "courses"
+  },
+  {
+    "key": "blogs/post.write",
+    "group": "blogs"
+  },
+  {
+    "key": "blogs/post-update.write",
+    "group": "blogs"
+  },
+  {
+    "key": "blogs/check-slug.readonly",
+    "group": "blogs"
+  },
+  {
+    "key": "blogs/category.readonly",
+    "group": "blogs"
+  },
+  {
+    "key": "blogs/author.readonly",
+    "group": "blogs"
+  },
+  {
+    "key": "blogs/posts.readonly",
+    "group": "blogs"
+  },
+  {
+    "key": "blogs/list.readonly",
+    "group": "blogs"
+  },
+  {
+    "key": "companies.readonly",
+    "group": "companies"
+  },
+  {
+    "key": "associations.readonly",
+    "group": "associations"
+  },
+  {
+    "key": "associations.write",
+    "group": "associations"
+  },
+  {
+    "key": "associations/relation.readonly",
+    "group": "associations"
+  },
+  {
+    "key": "associations/relation.write",
+    "group": "associations"
+  },
+  {
+    "key": "emails/builder.readonly",
+    "group": "emails"
+  },
+  {
+    "key": "emails/builder.write",
+    "group": "emails"
+  },
+  {
+    "key": "emails/schedule.readonly",
+    "group": "emails"
+  },
+  {
+    "key": "custom-menu-link.readonly",
+    "group": "custom-menu-link"
+  },
+  {
+    "key": "custom-menu-link.write",
+    "group": "custom-menu-link"
+  },
+  {
+    "key": "documents_contracts/list.readonly",
+    "group": "documents_contracts"
+  },
+  {
+    "key": "documents_contracts/sendlink.write",
+    "group": "documents_contracts"
+  },
+  {
+    "key": "documents_contracts_templates/list.readonly",
+    "group": "documents_contracts_templates"
+  },
+  {
+    "key": "documents_contracts_templates/sendlink.write",
+    "group": "documents_contracts_templates"
+  },
+  {
+    "key": "marketplace-installer-details.readonly",
+    "group": "marketplace-installer-details"
+  },
+  {
+    "key": "charges.readonly",
+    "group": "charges"
+  },
+  {
+    "key": "charges.write",
+    "group": "charges"
+  },
+  {
+    "key": "voice-ai-dashboard.readonly",
+    "group": "voice-ai-dashboard"
+  },
+  {
+    "key": "voice-ai-agents.readonly",
+    "group": "voice-ai-agents"
+  },
+  {
+    "key": "voice-ai-agents.write",
+    "group": "voice-ai-agents"
+  },
+  {
+    "key": "voice-ai-agent-goals.readonly",
+    "group": "voice-ai-agent-goals"
+  },
+  {
+    "key": "voice-ai-agent-goals.write",
+    "group": "voice-ai-agent-goals"
+  },
+  {
+    "key": "phonenumbers.read",
+    "group": "phonenumbers"
+  },
+  {
+    "key": "numberpools.read",
+    "group": "numberpools"
+  },
+  {
+    "key": "nectcon.automations.write",
+    "group": "SaaS Launchup"
+  }
+]

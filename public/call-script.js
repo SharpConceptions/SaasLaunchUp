@@ -5,7 +5,7 @@ const oldRender = render;
 
 render = function () {
   oldRender();
-  if (category !== 'Sales' || view !== 'Sales dialer') closeCallScript();
+  if (category !== 'Sales' || view !== 'Calls' || callWorkspaceTab !== 'Sales dialer') closeCallScript();
   syncCallScriptButton();
 };
 
@@ -21,7 +21,18 @@ function positionCallScript() {
   scriptPanel.style.top = `${Math.min(100, Math.max(12, window.innerHeight - scriptPanel.offsetHeight - 12))}px`;
 }
 
+function updateCallScriptCompany() {
+  const contact=currentDialerContact();
+  const research=contact&&(companyResearch[contact.id]||(contact.researchSummary?{description:contact.researchSummary,website:contact.researchSourceUrl}:null));
+  const fact=document.querySelector('#company-script-fact');
+  const source=document.querySelector('#company-script-source');
+  fact.textContent=research?.description||'[research the company website first]';
+  source.hidden=!research;
+  source.textContent=research?`Source: ${research.website} · Review this wording before calling.`:'';
+}
+
 function openCallScript() {
+  updateCallScriptCompany();
   scriptPanel.hidden = false;
   if (!scriptPanel.dataset.positioned) {
     positionCallScript();

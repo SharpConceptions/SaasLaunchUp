@@ -1,0 +1,52 @@
+.private-token-card{margin-bottom:18px}
+.private-token-head{display:flex;justify-content:space-between;gap:16px;align-items:start}
+.private-token-head h2{margin:5px 0 8px;font-size:1.3rem}
+.private-token-head p{margin:0;color:#65768c;line-height:1.5}
+.private-token-form{display:grid;grid-template-columns:minmax(180px,2fr) minmax(130px,1fr) minmax(180px,1.5fr) minmax(130px,1fr) auto;align-items:end;gap:10px;margin:20px 0}
+.private-token-form label,.private-token-secret label{display:grid;gap:6px;color:#354a61;font-size:14px;font-weight:650}
+.private-token-form input,.private-token-form select,.private-token-secret input{width:100%;min-height:42px;padding:9px 11px;border:1px solid #d2dee9;border-radius:9px;background:#fff;color:#182d44}
+.private-token-secret{padding:16px;border:1px solid #91cfc9;background:#f1faf9;border-radius:10px;margin:15px 0}
+.private-token-secret p{font-size:14px;line-height:1.5;color:#35556a}
+.private-token-secret .secondary{margin-top:10px}
+.private-token-list{display:grid;gap:9px;margin-top:17px}
+.private-token-item{display:flex;justify-content:space-between;gap:18px;align-items:center;padding:13px 15px;border:1px solid #e0e7ef;border-radius:10px}
+.private-token-item strong,.private-token-item span,.private-token-item small{display:block}
+.private-token-item span,.private-token-item small{margin-top:4px;color:#687b90;font-size:13px}
+.private-token-actions{display:flex;gap:7px;flex-wrap:wrap}
+.private-token-error{color:#a82b2b;font-size:14px}
+.private-token-guide{font-size:13px;color:#62758a;line-height:1.5;margin:8px 0 0}
+.private-token-guide code{overflow-wrap:anywhere}
+.private-integration-types{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0;color:#6c7c8f;font-size:13px}
+.private-integration-types span{padding:9px 12px;border:1px solid #dce5ec;border-radius:9px}
+.private-integration-types .private-type-active{background:#edf8f6;border-color:#8ec8c1;color:#145f5a;font-weight:700}
+.private-start{margin:3px 0 17px}
+.private-wizard-head{margin:21px 0 16px}
+.private-wizard-head>span{font-size:12px;font-weight:750;letter-spacing:.1em;text-transform:uppercase;color:#527279}
+.private-wizard-head h3{font-size:20px;margin:6px 0}
+.private-wizard-head p{margin:0;color:#66798d}
+.private-details-form{display:grid;gap:15px;max-width:620px}
+.private-details-form label,.private-scope-search{display:grid;gap:7px;color:#354a61;font-size:14px;font-weight:650}
+.private-details-form input,.private-details-form textarea,.private-scope-search input{width:100%;padding:10px 12px;border:1px solid #d2dee9;border-radius:9px;background:#fff;color:#182d44;font:inherit}
+.private-details-form input,.private-scope-search input{min-height:42px}
+.private-wizard-actions{display:flex;gap:9px;justify-content:flex-end;margin:17px 0}
+.private-all-row,.private-scope-row{display:flex;align-items:flex-start;gap:11px;cursor:pointer}
+.private-all-row{padding:15px;border:1px solid #accdc9;border-radius:10px;background:#f5faf9;margin-bottom:12px}
+.private-all-row input,.private-scope-row input,.private-all-warning input{width:17px;height:17px;flex:none;accent-color:#187b74}
+.private-all-row strong,.private-scope-row strong,.private-all-row small,.private-scope-row small{display:block}
+.private-all-row small,.private-scope-row small{font-size:12px;color:#6d7d90;margin-top:3px}
+.private-all-warning{border:1px solid #dfb977;background:#fff8ec;border-radius:10px;padding:14px;margin:12px 0;color:#694719}
+.private-all-warning p{line-height:1.5;font-size:13px}
+.private-all-warning label{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:700}
+.private-scope-search{margin:15px 0 8px}
+.private-scope-list{height:340px;overflow:auto;border:1px solid #dce5ec;border-radius:10px;padding:4px 15px;background:#fff}
+.private-scope-group{padding:10px 0;border-bottom:1px solid #e9eef2}
+.private-scope-group:last-child{border-bottom:0}
+.private-scope-group h4{font-size:13px;color:#526a7c;margin:3px 0 7px;text-transform:capitalize}
+.private-scope-row{padding:8px 7px;border-radius:6px}
+.private-scope-row:hover{background:#f5f9fb}
+.private-scope-row strong{font-size:13px;font-weight:650;overflow-wrap:anywhere}
+.private-scope-row[hidden],.private-scope-group[hidden]{display:none}
+.private-scope-footnote{color:#64798b;font-size:13px;line-height:1.5}
+.private-token-item p{margin:5px 0;color:#4d6278;font-size:13px}
+@media(max-width:850px){.private-token-form{grid-template-columns:1fr 1fr}.private-token-item{align-items:flex-start;flex-direction:column}}
+@media(max-width:550px){.private-token-form{grid-template-columns:1fr}}

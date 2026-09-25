@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "NectCon CRM",
-  description: "NectCon sales workspace and CRM foundation.",
+  title: "SaaS Launchup CRM",
+  description: "SaaS Launchup sales workspace and admin center.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",

@@ -1,0 +1,26 @@
+.integration-tenant-row{display:flex;align-items:center;gap:12px;margin:0 0 18px;font-size:14px;font-weight:700;color:#52657b}
+.integration-tenant-row select{min-width:min(320px,100%);min-height:40px;padding:8px 12px;border:1px solid #d6e0e8;border-radius:9px;background:#fff;color:#1b3048}
+.integration-card{margin-bottom:18px}
+.integration-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.integration-card-head h2{margin:5px 0;font-size:1.3rem}
+.integration-card-head p{margin:0;color:#65768c}
+.integration-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:22px 0}
+.integration-summary>div{border:1px solid #e3eaf0;border-radius:10px;padding:12px}
+.integration-summary span{display:block;color:#738398;font-size:12px;margin-bottom:6px}
+.integration-summary strong{font-size:14px;overflow-wrap:anywhere}
+.integration-actions{display:flex;gap:9px;flex-wrap:wrap;margin:0 0 18px}
+.integration-disconnect{color:#a82b2b;border-color:#e6b8b8}
+.integration-details{border-top:1px solid #e6edf3;padding-top:16px;margin-top:20px}
+.integration-details summary{cursor:pointer;font-weight:750;color:#175e5a}
+.integration-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:18px;max-width:760px}
+.integration-form label{display:grid;gap:7px;font-size:14px;font-weight:650;color:#354a61}
+.integration-form input{width:100%;min-height:42px;padding:9px 11px;border:1px solid #d2dee9;border-radius:9px;background:#fff;color:#182d44}
+.integration-form label:nth-child(3),.integration-form .form-note,.integration-form .integration-message{grid-column:1/-1}
+.integration-form .form-note{margin:0;color:#677b90;font-size:13px;line-height:1.5}
+.integration-message{margin:0;color:#a82b2b;font-size:13px}
+.integration-form .primary{justify-self:start}
+.integration-footnote{margin:20px 0 0;color:#62758a;font-size:13px;line-height:1.55}
+.integration-footnote a{color:#0e6e68}
+.integration-next .section-card{gap:7px}
+@media(max-width:650px){.integration-summary,.integration-form{grid-template-columns:1fr}.integration-tenant-row{align-items:stretch;flex-direction:column}.integration-tenant-row select{min-width:0}.integration-card-head{align-items:flex-start;flex-direction:column}}
+

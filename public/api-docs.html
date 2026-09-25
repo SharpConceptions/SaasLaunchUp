@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SaaS Launchup private API guide</title>
+  <style>
+    :root{font-family:"Aptos","Segoe UI",Arial,sans-serif;color:#182b43;background:#f7f9fc}
+    *{box-sizing:border-box}body{margin:0}header{background:#101c32;color:white;padding:18px clamp(18px,5vw,60px);font-weight:700}
+    main{max-width:850px;margin:auto;padding:40px 20px 80px}h1{font-size:clamp(28px,4vw,42px);letter-spacing:-.04em}
+    h2{font-size:22px;margin-top:38px}p,li{line-height:1.6;font-size:16px}code,pre{font-family:Consolas,monospace}
+    pre{overflow:auto;background:#15253d;color:#eef6ff;border-radius:12px;padding:18px;line-height:1.5}
+    code{overflow-wrap:anywhere}a{color:#176b67}table{width:100%;border-collapse:collapse}th,td{text-align:left;border-bottom:1px solid #dbe4ee;padding:10px}
+  </style>
+</head>
+<body><header>SaaS Launchup · Private API</header><main>
+  <h1>Connect your backend</h1>
+  <p>In the SaaS Launchup workspace, open <strong>Profile → Workspace setup → Custom Integrations</strong>. Enter a name and description, then choose permissions. Use Select all access only when the integration needs every available permission. Copy the token when it appears; SaaS Launchup will not show it again.</p>
+  <p>Keep the token in your server’s secret settings. Never put it in browser JavaScript, public HTML, or a URL. The token belongs to one company and expires after 90 days. OAuth 2.0 app authorization is not active yet.</p>
+  <p>The permissions catalog includes the scopes supplied for integration planning. Selectable scopes marked reserved do not unlock endpoints today. SaaS Launchup saves the requested list and separately fixes the currently effective permissions when the token is issued. Activating a reserved scope later requires a new integration approval.</p>
+  <h2>Endpoint and authorization</h2>
+  <pre>https://api.saaslaunchup.com/api/v1/private/{resource}
+Authorization: Bearer YOUR_TOKEN
+Content-Type: application/json</pre>
+  <table><thead><tr><th>Resource</th><th>GET</th><th>POST</th><th>PATCH / DELETE</th></tr></thead><tbody>
+    <tr><td>companies</td><td>List recent companies</td><td>Create a company</td><td>Edit / delete if unlinked</td></tr>
+    <tr><td>contacts</td><td>List recent contacts</td><td>Create a contact</td><td>Edit / delete</td></tr>
+    <tr><td>pipelines</td><td>List pipelines and stages</td><td>Create a pipeline with a New lead stage</td><td>Rename / delete when unlinked</td></tr>
+    <tr><td>stages</td><td>List stages</td><td>Add a stage to a pipeline</td><td>Rename / delete when unlinked</td></tr>
+    <tr><td>opportunities</td><td>List recent leads</td><td>Create a lead</td><td>Edit / delete</td></tr>
+    <tr><td>tasks</td><td>List follow-up tasks</td><td>Create a dated task</td><td>Edit / delete</td></tr>
+    <tr><td>automation-rules</td><td>List configured rules and status</td><td>Create a draft rule</td><td>Edit / delete a draft rule</td></tr>
+  </tbody></table>
+  <h2>Examples</h2>
+  <p>Use the pipeline GET response to find a stage ID before creating an opportunity. A contact can refer to a company ID created earlier.</p>
+  <pre>GET /api/v1/private/pipelines
+GET /api/v1/private/contacts
+
+POST /api/v1/private/companies
+{"name":"Example Co","domain":"example.com"}
+
+POST /api/v1/private/contacts
+{"name":"Jordan Lee","email":"jordan@example.com","company_id":"COMPANY_ID"}
+
+POST /api/v1/private/opportunities
+{"title":"Example Co — new lead","stage_id":"STAGE_ID","contact_id":"CONTACT_ID","company_id":"COMPANY_ID","value_cents":0}</pre>
+  <p>GET returns up to 100 recent records. POST returns <code>201</code> and the new record ID. PATCH accepts an <code>id</code> and fields to change. DELETE requires the matching write permission and a body such as <code>{"id":"CONTACT_UUID","confirmation":"delete"}</code>. Delete is irreversible. Linked companies and templates are protected until related records are removed. An invalid, expired, or revoked token returns <code>401</code>.</p>
+  <p>Website form submissions and newly created API leads with contacts receive a follow-up task due the next day. These tasks appear in SaaS Launchup's Calendar view. Automation rules created or changed through this API are saved as drafts; outbound email, SMS, webhooks, and external calendar sync remain paused until their providers and controls are connected. A SaaS Launchup token does not authorize Google, Meta, LinkedIn, X, Reddit, Twilio, Stripe, DNS, or domain accounts.</p>
+  <h2 id="documents">Documents &amp; Contracts</h2>
+  <p>Choose the document and contract permissions in the Custom Integrations scope list. Existing legacy tokens retain their original Documents access setting.</p>
+  <table><thead><tr><th>Resource</th><th>GET</th><th>POST</th><th>PATCH / DELETE</th></tr></thead><tbody>
+    <tr><td>document-templates</td><td>List templates; add <code>?id=UUID</code> for content</td><td>Create a template</td><td>Edit / delete when unused</td></tr>
+    <tr><td>documents</td><td>List documents; add <code>?id=UUID</code> for content and delivery status</td><td>Create a draft document</td><td>Edit / delete</td></tr>
+    <tr><td>document-send</td><td>—</td><td>Prepare delivery of an existing document</td><td>—</td></tr>
+    <tr><td>template-send</td><td>—</td><td>Create personalized documents and prepare delivery</td><td>—</td></tr>
+  </tbody></table>
+  <p>Templates use plain text and may include <code>{{contact.name}}</code>, <code>{{contact.email}}</code>, or <code>{{company.name}}</code>. A template can be marked as a document or contract. Contract signing is not available yet.</p>
+  <pre>POST /api/v1/private/document-templates
+{"name":"Proposal","kind":"document","title":"Proposal for {{contact.name}}","body_text":"Hello {{contact.name}}, here is your proposal."}
+
+POST /api/v1/private/documents
+{"kind":"contract","title":"Service agreement","body_text":"Agreement text"}
+
+POST /api/v1/private/document-send
+{"document_id":"DOCUMENT_UUID","contact_ids":["CONTACT_UUID"]}
+
+POST /api/v1/private/template-send
+{"template_id":"TEMPLATE_UUID","contact_ids":["CONTACT_UUID"]}</pre>
+  <p>Delivery requests accept one to ten contacts with email addresses and return <code>202</code>, <code>sent: false</code>, and <code>status: "awaiting_email_connection"</code>. SaaS Launchup records the prepared delivery but does not email it until an outbound email provider and delivery process are connected. Do not treat the <code>202</code> response as proof that a recipient received anything.</p>
+  <p>For a website form builder without server code, open <a href="/workspace">Funnels &amp; Automation → Forms &amp; assessments</a>. Its webhook key is separate from a private API token.</p>
+</main></body></html>

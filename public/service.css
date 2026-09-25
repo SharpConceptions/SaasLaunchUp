@@ -1,0 +1,19 @@
+.account.active{outline:2px solid #65bdb6;outline-offset:2px}
+.service-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 22px}
+.service-tabs button{border:1px solid #d7e2ed;background:#fff;color:#3c5272;border-radius:999px;padding:9px 15px;font:inherit;cursor:pointer}
+.service-tabs button.active{background:#e8f7f5;border-color:#73c7bd;color:#104f4c;font-weight:700}
+.service-grid{display:grid;grid-template-columns:minmax(300px,0.9fr) minmax(350px,1.1fr);gap:20px;align-items:start}
+.service-grid>section>h2{margin:0 0 14px}
+.service-form label{display:flex;flex-direction:column;gap:7px;font-weight:600;margin-bottom:14px}
+.service-form input,.service-form select,.service-form textarea,.service-ticket select{width:100%;padding:10px 12px;border:1px solid #cfdceb;border-radius:10px;font:inherit;background:#fff}
+.service-form button{margin-top:8px}
+.service-list{display:grid;gap:12px}
+.service-ticket{padding:20px}
+.service-ticket-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.service-ticket h3{margin:0}
+.service-ticket p{white-space:pre-wrap;overflow-wrap:anywhere}
+.service-ticket small{display:block;color:#687b95;margin-bottom:12px}
+.service-ticket label{display:flex;align-items:center;gap:10px;font-size:14px}
+.service-ticket select{width:auto;min-width:145px}
+.service-purchase{display:flex;justify-content:space-between;gap:14px;border-top:1px solid #e4edf5;padding:12px 0}
+@media(max-width:900px){.service-grid{grid-template-columns:1fr}.service-purchase{flex-direction:column}}

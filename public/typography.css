@@ -1,0 +1,44 @@
+:root{
+  font-family:"Aptos","Avenir Next","Segoe UI",Arial,sans-serif;
+  color:#1c2e43;
+  font-weight:400;
+  letter-spacing:-.012em;
+}
+body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+button,input,select,textarea{letter-spacing:inherit}
+button{font-weight:600}
+h1,h2,h3,.page-header h1,.admin-panel h2,.dashboard-panel h2{
+  font-family:"Aptos Display","Aptos","Avenir Next","Segoe UI",Arial,sans-serif;
+  font-weight:700;
+  letter-spacing:-.025em;
+}
+.page-header h1{letter-spacing:-.035em}
+.utility-brand{font-weight:700;letter-spacing:-.02em}
+.category{font-weight:600;letter-spacing:-.01em}
+.category.active{font-weight:700}
+.workspace{padding-top:22px}
+.workspace-nav{gap:2px}
+.nav-btn{gap:0;padding:11px 15px;color:#516277;font-weight:550;letter-spacing:0}
+.nav-btn.active{background:#eef5f4;color:#145e5a;font-weight:700;box-shadow:inset 3px 0 #378d84}
+.nav-btn:hover{background:#f2f6f7}
+.nav-text{display:block}
+.eyebrow,.dashboard-kicker,.metric span,.contacts-table th{font-weight:700}
+.metric strong,.admin-kpi strong{font-weight:700;letter-spacing:-.035em}
+.name-cell{font-weight:650}
+.field-row strong{font-weight:600}
+.detail-top{justify-content:flex-end}
+.detail h2{margin-top:4px;font-weight:700}
+.contact-mark{display:grid;place-items:center;flex:none;width:34px;height:34px;border:1px solid #d9e5e9;border-radius:10px;background:#f5f9fa;color:#315c6a}
+.contact-mark svg{width:19px;height:19px}
+@media(max-width:800px){
+  .workspace{width:180px;padding:18px 8px}
+  .workspace-bottom{display:block}
+  .nav-btn{justify-content:flex-start;padding:10px 11px;font-size:.84rem}
+  .nav-text{display:block}
+}
+@media(max-width:560px){
+  .workspace{width:138px;padding:13px 5px}
+  .nav-btn{font-size:.78rem;line-height:1.2;padding:9px 7px}
+  .contact-mark{width:30px;height:30px}
+  .contact-mark svg{width:17px;height:17px}
+}

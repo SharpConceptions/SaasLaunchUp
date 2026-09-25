@@ -1,0 +1,40 @@
+.website-card{margin-bottom:18px}
+.website-head,.website-form-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.website-head h2{margin:5px 0;font-size:1.3rem}
+.website-head p{margin:0;color:#65768c}
+.website-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:22px 0}
+.website-steps>div{display:flex;align-items:flex-start;gap:10px;background:#f7fafb;border:1px solid #e4ebf0;border-radius:11px;padding:13px;color:#4e6177;font-size:13px;line-height:1.4}
+.website-steps b{display:grid;place-items:center;flex:none;width:22px;height:22px;border-radius:50%;background:#dff2ee;color:#176f68;font-size:12px}
+.website-list{display:grid;gap:10px;margin:18px 0}
+.website-item{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px;border:1px solid #e1e9ee;border-radius:11px}
+.website-item>div:first-child{display:grid;gap:5px;min-width:0}
+.website-item strong{color:#20354b}
+.website-item span,.website-item small{font-size:12px;color:#64788b;overflow-wrap:anywhere}
+.website-item code{color:#27596a;font-size:12px}
+.website-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:7px}
+.website-actions button{padding:8px 10px;font-size:12px}
+.website-revoke{color:#a82b2b;border-color:#e8c9c9}
+.website-empty{color:#6c7f90;font-size:14px}
+.website-add{margin-top:8px}
+.website-secret{border:1px solid #94d4c8;background:#f1faf8;border-radius:12px;margin:20px 0;padding:17px;display:grid;gap:10px;max-width:760px}
+.website-secret>p,.website-secret details p{margin:0;color:#4d6b67;font-size:13px;line-height:1.4}
+.website-secret label,.website-fields label{display:grid;gap:7px;color:#354a61;font-size:13px;font-weight:650}
+.website-secret input,.website-fields input,.website-fields select{width:100%;min-height:41px;padding:9px 11px;border:1px solid #d2dee9;border-radius:9px;background:#fff;color:#182d44}
+.website-secret input{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px}
+.website-secret button{justify-self:start}
+.website-secret details{border-top:1px solid #c5e5df;padding-top:10px}
+.website-secret details label{margin:10px 0}
+.website-secret summary,.website-mapping summary,.website-example summary{cursor:pointer;color:#175e5a;font-weight:700}
+.website-form{border:1px solid #dce8ed;border-radius:12px;padding:18px;margin-top:18px;background:#fbfdfd}
+.website-form-head h3{margin:0 0 16px;font-size:1.08rem}
+.website-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;max-width:760px}
+.website-mapping{margin:18px 0}
+.website-mapping>p,.website-form .form-note{color:#64778a;font-size:13px;line-height:1.45}
+.website-mapping .website-fields{margin-top:14px}
+.website-error{color:#a82b2b;font-size:13px}
+.website-error[hidden]{display:none}
+.website-example{border-top:1px solid #e6edf3;margin-top:20px;padding-top:16px}
+.website-example pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f5f8fa;border:1px solid #e2e9ef;padding:15px;border-radius:10px;font-size:12px;line-height:1.45}
+.website-example p{color:#65778a;font-size:13px}
+@media(max-width:750px){.website-steps{grid-template-columns:1fr}.website-item{align-items:stretch;flex-direction:column}.website-actions{justify-content:flex-start}}
+@media(max-width:600px){.website-fields{grid-template-columns:1fr}.website-head{align-items:flex-start;flex-direction:column}}
