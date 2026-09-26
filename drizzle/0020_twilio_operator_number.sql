@@ -1,0 +1,1 @@
+ALTER TABLE `twilio_settings` ADD `operator_number` text;

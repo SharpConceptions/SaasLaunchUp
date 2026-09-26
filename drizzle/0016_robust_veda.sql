@@ -50,29 +50,6 @@ CREATE TABLE `appointments` (
 CREATE INDEX `idx_appointments_tenant_owner_start` ON `appointments` (`tenant_id`,`owner_user_id`,`starts_at`);--> statement-breakpoint
 CREATE INDEX `idx_appointments_tenant_contact` ON `appointments` (`tenant_id`,`contact_id`);
 --> statement-breakpoint
-CREATE TRIGGER `trg_appointments_no_overlap_insert` BEFORE INSERT ON `appointments`
-WHEN NEW.`status` = 'booked' AND EXISTS (
-	SELECT 1 FROM `appointments` existing
-	WHERE existing.`tenant_id` = NEW.`tenant_id`
-		AND existing.`owner_user_id` = NEW.`owner_user_id`
-		AND existing.`status` = 'booked'
-		AND NEW.`starts_at` < existing.`ends_at`
-		AND NEW.`ends_at` > existing.`starts_at`
-)
-BEGIN
-	SELECT RAISE(ABORT, 'appointment_overlap');
-END;
+CREATE TRIGGER `trg_appointments_no_overlap_insert` BEFORE INSERT ON `appointments` WHEN NEW.`status` = 'booked' AND EXISTS (SELECT 1 FROM `appointments` existing WHERE existing.`tenant_id` = NEW.`tenant_id` AND existing.`owner_user_id` = NEW.`owner_user_id` AND existing.`status` = 'booked' AND NEW.`starts_at` < existing.`ends_at` AND NEW.`ends_at` > existing.`starts_at`) BEGIN SELECT RAISE(ABORT, 'appointment_overlap'); END;--> statement-breakpoint
 --> statement-breakpoint
-CREATE TRIGGER `trg_appointments_no_overlap_update` BEFORE UPDATE OF `tenant_id`, `owner_user_id`, `starts_at`, `ends_at`, `status` ON `appointments`
-WHEN NEW.`status` = 'booked' AND EXISTS (
-	SELECT 1 FROM `appointments` existing
-	WHERE existing.`id` != NEW.`id`
-		AND existing.`tenant_id` = NEW.`tenant_id`
-		AND existing.`owner_user_id` = NEW.`owner_user_id`
-		AND existing.`status` = 'booked'
-		AND NEW.`starts_at` < existing.`ends_at`
-		AND NEW.`ends_at` > existing.`starts_at`
-)
-BEGIN
-	SELECT RAISE(ABORT, 'appointment_overlap');
-END;
+CREATE TRIGGER `trg_appointments_no_overlap_update` BEFORE UPDATE OF `tenant_id`, `owner_user_id`, `starts_at`, `ends_at`, `status` ON `appointments` WHEN NEW.`status` = 'booked' AND EXISTS (SELECT 1 FROM `appointments` existing WHERE existing.`id` != NEW.`id` AND existing.`tenant_id` = NEW.`tenant_id` AND existing.`owner_user_id` = NEW.`owner_user_id` AND existing.`status` = 'booked' AND NEW.`starts_at` < existing.`ends_at` AND NEW.`ends_at` > existing.`starts_at`) BEGIN SELECT RAISE(ABORT, 'appointment_overlap'); END;

@@ -8,9 +8,19 @@ export const organizations = sqliteTable("organizations", {
   primaryDomain: text("primary_domain"), timezone: text("timezone").notNull().default("America/Chicago"),
   status: text("status").notNull().default("active"), createdAt: timestamp(),
 });
-export const users = sqliteTable("users", {
-  id: text("id").primaryKey(), email: text("email"), displayName: text("display_name"), createdAt: timestamp(),
+export const onboardingProfiles = sqliteTable("onboarding_profiles", {
+  tenantId: text("tenant_id").primaryKey().references(() => organizations.id),
+  industry: text("industry"), teamSize: text("team_size"), goalsJson: text("goals_json"),
+  phone: text("phone"), website: text("website"), completedAt: text("completed_at"),
+  createdAt: timestamp(), updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
+export const users = sqliteTable("users", {
+  id: text("id").primaryKey(), email: text("email"), displayName: text("display_name"), passwordHash: text("password_hash"), createdAt: timestamp(),
+});
+export const authSessions = sqliteTable("auth_sessions", {
+  id: text("id").primaryKey(), userId: text("user_id").notNull().references(() => users.id),
+  tokenHash: text("token_hash").notNull(), expiresAt: text("expires_at").notNull(), createdAt: timestamp(),
+}, table => [uniqueIndex("uidx_auth_sessions_token_hash").on(table.tokenHash), index("idx_auth_sessions_user").on(table.userId)]);
 export const teams = sqliteTable("teams", {
   id: text("id").primaryKey(), tenantId: text("tenant_id").notNull().references(() => organizations.id),
   name: text("name").notNull(), createdAt: timestamp(),
@@ -171,6 +181,25 @@ export const providerConnections = sqliteTable("provider_connections", {
   createdBy: text("created_by").notNull().references(() => users.id), createdAt: timestamp(),
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 }, table => [uniqueIndex("uidx_provider_connections_tenant_provider").on(table.tenantId, table.provider)]);
+export const twilioSettings = sqliteTable("twilio_settings", {
+  tenantId: text("tenant_id").primaryKey().references(() => organizations.id),
+  fromNumber: text("from_number").notNull(), operatorNumber: text("operator_number"), voiceEnabled: integer("voice_enabled", { mode: "boolean" }).notNull().default(false),
+  smsEnabled: integer("sms_enabled", { mode: "boolean" }).notNull().default(false),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+export const communicationMessages = sqliteTable("communication_messages", {
+  id: text("id").primaryKey(), tenantId: text("tenant_id").notNull().references(() => organizations.id),
+  contactId: text("contact_id").references(() => contacts.id), channel: text("channel").notNull(),
+  direction: text("direction").notNull(), fromNumber: text("from_number").notNull(), toNumber: text("to_number").notNull(),
+  body: text("body").notNull(), providerId: text("provider_id"), status: text("status").notNull(),
+  errorCode: text("error_code"), createdBy: text("created_by").references(() => users.id), createdAt: timestamp(),
+}, table => [index("idx_communication_messages_tenant_created").on(table.tenantId, table.createdAt), index("idx_communication_messages_provider").on(table.providerId)]);
+export const communicationCalls = sqliteTable("communication_calls", {
+  id: text("id").primaryKey(), tenantId: text("tenant_id").notNull().references(() => organizations.id),
+  contactId: text("contact_id").references(() => contacts.id), fromNumber: text("from_number").notNull(), toNumber: text("to_number").notNull(),
+  providerId: text("provider_id"), status: text("status").notNull(), durationSeconds: integer("duration_seconds"),
+  errorCode: text("error_code"), createdBy: text("created_by").references(() => users.id), createdAt: timestamp(), updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, table => [index("idx_communication_calls_tenant_created").on(table.tenantId, table.createdAt), index("idx_communication_calls_provider").on(table.providerId)]);
 export const integrationOAuthStates = sqliteTable("integration_oauth_states", {
   state: text("state").primaryKey(), tenantId: text("tenant_id").notNull().references(() => organizations.id),
   userId: text("user_id").notNull().references(() => users.id), provider: text("provider").notNull(),
