@@ -2,7 +2,7 @@
 
 Updated: 2026-09-25
 
-**Merge readiness: BLOCKED pending automated integration tests.** PR review/check success and the manual staging walkthrough do not substitute for exercising the route's D1 batches and browser workflows in automated tests.
+**Merge readiness:** Automated domain, D1-backed route, concurrency, and Playwright tests are included. Merge after the complete suite and PR checks pass; keep the feature at Integrated pending production release review.
 
 Status meanings follow `docs/product-blueprint.md`: Not started, UI only, Backend exists, Integrated, Verified. `Verified` requires a real tenant walkthrough, permissions, failure handling, automated critical-path tests, and reproducible runtime evidence. No feature below is marked Verified based only on source inspection or local tests.
 
@@ -26,6 +26,8 @@ Status meanings follow `docs/product-blueprint.md`: Not started, UI only, Backen
 - Reminder jobs use the blueprint's confirmation and 24-hour/4-hour/15-minute schedule, omit elapsed reminders, and have a unique appointment/version/kind/channel key. Reschedule advances the version and skips old jobs; cancellation skips outstanding jobs. Status is `dry_run`; there is no sender or job dispatcher in this slice.
 - Appointment mutations use the same tenant/record-scope visibility as appointment listing. Managers can reschedule/cancel visible team or organization appointments while availability and collision checks remain tied to the appointment owner. Lifecycle audit/activity identifiers are deterministic per appointment version to avoid duplicate entries on retries.
 - Reschedule jobs and lifecycle logs are inserted only when the appointment remains booked at the expected new version inside the D1 batch. A concurrent cancellation therefore cannot leave orphaned reminder jobs or a false reschedule audit event.
+- Calendar subview requests use a generation guard so late responses from a prior view cannot replace the Booking form or clear user input.
+- Calendar subview requests use a generation guard so late responses from a prior view cannot replace the Booking form or clear user input.
 - Existing form intake routes and payloads are unchanged. CRM contact deletion now cleans linked appointment jobs and records; private API opportunity deletion unlinks appointments before deleting the opportunity.
 
 ## Staging walkthrough evidence
@@ -39,17 +41,17 @@ Status meanings follow `docs/product-blueprint.md`: Not started, UI only, Backen
 
 ## Test and build evidence
 
-- `npm test`: 15 tests passed, 0 failed on 2026-09-25. These tests cover domain helpers and lifecycle behavior using `MemoryBookingStore`, plus direct SQLite migration/trigger/unique-key assertions. They do **not** instantiate the appointment route, execute its D1 batch statements, or automate the browser workflows. Passing this suite alone is insufficient for merge.
-- `npx eslint app/api/crm/route.ts 'app/api/v1/private/[resource]/route.ts' app/api/appointments/route.ts lib/appointments.ts db/schema.ts public/views.js tests/appointments.test.mjs`: 0 errors; two existing unused-variable warnings in `public/views.js` (`renderCompanies`, `dashboardTenantId`).
+- `npm test`: 19 tests passed on 2026-09-25. Four integration tests run the actual built Worker with disposable local D1 and Playwright: booking, duplicate rejection, manager record scope, cross-tenant denial, reschedule/cancel audit and job persistence, concurrent bookings, cancellation/reschedule races, availability UI, booking UI, collision feedback, rescheduling, and cancellation. Install Chromium with `npx playwright install chromium` before running the suite.
+- Focused ESLint: 0 errors and two pre-existing unused-variable warnings in `public/views.js` (`renderCompanies`, `dashboardTenantId`).
 - `npm run build`: passed and includes `/api/appointments`.
 - `npx tsc --noEmit --pretty false`: appointment changes type-check; the command still reports three existing WebCrypto/JWK typing errors in `lib/access-identity.ts` (`JsonWebKey.kid` and `BufferSource` compatibility).
-- A manual authenticated staging walkthrough has been performed, but there are no automated D1-backed route tests or Playwright browser tests. The slice is not Verified and the PR is blocked pending those tests.
+- Manual authenticated staging plus automated local D1/API and browser workflows have been exercised. The slice remains Integrated pending production release review and a reproducible release walkthrough.
 
-## Required before merge
+## Automated integration coverage
 
-- Add D1-backed route tests for create, reschedule, cancel, manager record scopes, cross-tenant denial, duplicate booking, lost optimistic update, and concurrent cancellation/reschedule. Assert persisted appointments, audit/activity rows, and reminder-job states.
-- Add Playwright coverage for Availability save, Booking pages create, Calendar/Appointments list, UI reschedule and cancel, timezone/DST input handling, visible error feedback, and absence of duplicate/stale jobs.
-- Keep the existing live staging walkthrough evidence as supplemental evidence; do not treat a clean automated review or manual click-through as a substitute for these checks.
+- D1-backed route tests cover booking, rescheduling, cancellation, manager record scopes, cross-tenant denial, duplicate booking, optimistic conflicts, concurrent booking and cancellation/reschedule races, and persisted appointment/audit/activity/reminder state.
+- Playwright covers Availability save, Booking pages create, collision error feedback, reschedule/cancel, and dry-run job visibility. It exercises switching Calendar subviews while requests are pending to ensure stale async responses cannot erase form input.
+- Keep the live staging walkthrough as supplemental evidence; no message delivery provider is part of this slice.
 
 ## Provider and delivery boundaries
 
