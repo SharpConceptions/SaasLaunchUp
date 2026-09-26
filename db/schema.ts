@@ -135,6 +135,26 @@ export const activities = sqliteTable("activities", {
   summary: text("summary").notNull(), actorUserId: text("actor_user_id").references(() => users.id),
   createdAt: timestamp(),
 }, table => [index("idx_activities_tenant_contact_created").on(table.tenantId, table.contactId, table.createdAt)]);
+export const appointmentAvailability = sqliteTable("appointment_availability", {
+  id: text("id").primaryKey(), tenantId: text("tenant_id").notNull().references(() => organizations.id),
+  ownerUserId: text("owner_user_id").notNull().references(() => users.id), timezone: text("timezone").notNull(),
+  durationMinutes: integer("duration_minutes").notNull(), windowsJson: text("windows_json").notNull(),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, table => [uniqueIndex("uidx_appointment_availability_owner").on(table.tenantId, table.ownerUserId)]);
+export const appointments = sqliteTable("appointments", {
+  id: text("id").primaryKey(), tenantId: text("tenant_id").notNull().references(() => organizations.id),
+  ownerUserId: text("owner_user_id").notNull().references(() => users.id), contactId: text("contact_id").notNull().references(() => contacts.id),
+  opportunityId: text("opportunity_id").references(() => opportunities.id), title: text("title").notNull(),
+  startsAt: text("starts_at").notNull(), endsAt: text("ends_at").notNull(), timezone: text("timezone").notNull(),
+  version: integer("version").notNull().default(1), status: text("status").notNull().default("booked"),
+  createdAt: timestamp(), updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, table => [index("idx_appointments_tenant_owner_start").on(table.tenantId, table.ownerUserId, table.startsAt), index("idx_appointments_tenant_contact").on(table.tenantId, table.contactId)]);
+export const appointmentReminderJobs = sqliteTable("appointment_reminder_jobs", {
+  id: text("id").primaryKey(), tenantId: text("tenant_id").notNull().references(() => organizations.id),
+  appointmentId: text("appointment_id").notNull().references(() => appointments.id), appointmentVersion: integer("appointment_version").notNull(),
+  reminderKind: text("reminder_kind").notNull(), channel: text("channel").notNull(), dueAt: text("due_at").notNull(),
+  status: text("status").notNull().default("dry_run"), createdAt: timestamp(),
+}, table => [uniqueIndex("uidx_appointment_reminder_key").on(table.appointmentId, table.appointmentVersion, table.reminderKind, table.channel), index("idx_appointment_reminders_tenant_due").on(table.tenantId, table.status, table.dueAt)]);
 export const auditEvents = sqliteTable("audit_events", {
   id: text("id").primaryKey(), tenantId: text("tenant_id").notNull().references(() => organizations.id),
   actorUserId: text("actor_user_id").notNull().references(() => users.id), kind: text("kind").notNull(),
