@@ -338,3 +338,62 @@ test("Playwright covers availability, booking, visible collision errors, resched
     await page.close();
   }
 });
+
+test("connection API reports providers disconnected and OAuth fails closed without app registration secrets", async () => {
+  const response = await fetch(`${baseUrl}/api/integrations?tenant_id=${tenantId}`, { headers: { ...identityHeaders(ownerId) } });
+  assert.equal(response.status, 200);
+  const status = await response.json();
+  assert.equal(status.twilio.connected, false);
+  assert.equal(status.stripe.connected, false);
+  assert.equal(status.email.connected, false);
+  assert.ok(Object.values(status.oauth_providers).every(provider => provider.configured === false));
+  assert.ok(!JSON.stringify(status).includes("client_secret"));
+
+  const start = await fetch(`${baseUrl}/api/integrations/oauth`, {
+    method: "POST", headers: identityHeaders(ownerId),
+    body: JSON.stringify({ action: "start", tenant_id: tenantId, provider: "meta" }),
+  });
+  assert.equal(start.status, 503);
+  assert.match((await start.json()).error, /not configured/);
+});
+
+test("Playwright connection page makes providers clickable and states setup truthfully", async () => {
+  const page = await browser.newPage();
+  await page.route(`${baseUrl}/api/**`, route => route.continue({ headers: {
+    ...route.request().headers(),
+    "oai-authenticated-user-id": ownerId,
+    "oai-authenticated-user-email": "owner@example.test",
+  } }));
+  try {
+    await page.goto(`${baseUrl}/workspace`);
+    await page.getByRole("button", { name: /Open profile menu/ }).click();
+    await page.getByRole("menuitem", { name: "API connections" }).click();
+    await page.getByRole("heading", { name: "API connections" }).waitFor();
+    await page.locator(".connection-card").first().waitFor({ timeout: 15000 });
+    const cardCount = await page.locator(".connection-card").count();
+    assert.equal(cardCount, 12, `Expected 12 connection cards, found ${cardCount}:\n${(await page.locator("main").innerText()).slice(0,1600)}`);
+
+    await page.getByRole("button", { name: "Social & ads" }).click();
+    await page.getByLabel("Search connections").fill("LinkedIn");
+    assert.deepEqual(await page.locator(".connection-card h2").allTextContents(), ["LinkedIn"]);
+    await page.locator(".connection-card").filter({ has: page.getByRole("heading", { name: "LinkedIn" }) }).getByRole("button", { name: "Connection details" }).click();
+    await page.getByRole("heading", { name: "OAuth app setup required" }).waitFor();
+    const linkedinDetails = await page.locator("#integration-detail-content").innerText();
+    assert.match(linkedinDetails, /client ID and client secret/i, linkedinDetails);
+    assert.match(linkedinDetails, /api\/integrations\/oauth\?callback=1&provider=linkedin/, linkedinDetails);
+    await page.getByRole("button", { name: "Close" }).click();
+
+    await page.getByLabel("Search connections").fill("");
+    await page.getByRole("button", { name: "All" }).click();
+    await page.locator(".connection-card").filter({ has: page.getByRole("heading", { name: "Stripe" }) }).getByRole("button", { name: "Connect account" }).click();
+    await page.getByLabel("Stripe secret key").waitFor();
+    await page.getByRole("button", { name: "Close" }).click();
+
+    await page.getByRole("button", { name: "Domains & sites" }).click();
+    await page.locator(".connection-card").filter({ has: page.getByRole("heading", { name: "Domains & DNS" }) }).getByRole("button", { name: "Domain options" }).click();
+    await page.getByText("Use any domain you own", { exact: false }).waitFor();
+    await page.getByText(/Any domain you own can be used/).waitFor();
+  } finally {
+    await page.close();
+  }
+});

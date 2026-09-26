@@ -235,7 +235,7 @@ function renderModule(){const copy=moduleCopy[category]?.[view]||[view,'This wor
 function renderSettings(){
   const adminLink='<a class="secondary settings-link" href="/foundation">Open Admin center</a>';
   if(view==='Domain & DNS'){
-    $('#main').innerHTML=header('Domain & DNS','Company domain and email authentication')+notice('Domain changes and automatic DNS setup are not connected yet. No records will be changed from this page.')+`<section class="surface section-card"><h2>Company domain</h2><p>Save your primary domain in the company profile. DNS verification, SPF, DKIM, and DMARC setup will appear here when a domain provider is connected.</p>${adminLink}</section>`;
+    $('#main').innerHTML=header('Domain & DNS','Use any domain you own')+notice('Any domain you own can be used. Ownership verification and DNS changes are not automated yet, so this page will not change DNS records.')+`<section class="surface section-card"><h2>Bring any domain</h2><p>Enter your domain in the company profile. Connecting a DNS provider and verifying ownership are separate steps; no domain is claimed as connected until those checks are implemented.</p>${adminLink}<button class="secondary" type="button" data-open-domain-connections>View domain connections</button></section>`;
     return;
   }
   const content={Organization:['Company settings','Manage your company details and workspace records in Admin center.'], 'Team & roles':['Team access','Review workspace roles and permissions before inviting additional users.'], 'Compliance controls':['Outreach controls','Review consent, suppression, and calling requirements before enabling outbound channels.'],Billing:['Subscription & billing','Plans, invoices, and payment methods will appear after billing is connected.']};
