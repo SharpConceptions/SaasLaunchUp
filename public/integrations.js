@@ -55,7 +55,9 @@ function connectionStatus(item){
 }
 function renderConnectionCard(item){
   const state=connectionStatus(item);
-  return `<article class="connection-card"><div class="connection-card-top"><span class="connection-icon" aria-hidden="true">${escapeHTML(item.icon)}</span><span class="connection-status ${state.kind}">${escapeHTML(state.label)}</span></div><div class="connection-card-copy"><p class="connection-category">${escapeHTML(item.category.toUpperCase())}</p><h2>${escapeHTML(item.name)}</h2><p>${escapeHTML(item.description)}</p></div><button class="connection-action" type="button" data-provider-action="${escapeHTML(item.key)}">${state.kind==='connected'?'Manage connection':item.mode==='credential'?'Connect account':item.mode==='website'?'Open setup':item.mode==='domain'?'Domain options':'Connection details'}</button></article>`;
+  const oauthAction=item.mode==='oauth'&&!state.connected?`data-oauth-connect="${escapeHTML(item.key)}"`:'data-provider-action="'+escapeHTML(item.key)+'"';
+  const label=state.kind==='connected'?'Manage connection':item.mode==='oauth'?'Connect with '+escapeHTML(item.name):item.mode==='credential'?'Connect account':item.mode==='website'?'Open setup':item.mode==='domain'?'Domain options':'Connection details';
+  return `<article class="connection-card"><div class="connection-card-top"><span class="connection-icon" aria-hidden="true">${escapeHTML(item.icon)}</span><span class="connection-status ${state.kind}">${escapeHTML(state.label)}</span></div><div class="connection-card-copy"><p class="connection-category">${escapeHTML(item.category.toUpperCase())}</p><h2>${escapeHTML(item.name)}</h2><p>${escapeHTML(item.description)}</p></div><button class="connection-action" type="button" ${oauthAction}>${label}</button></article>`;
 }
 function renderCustomIntegrations(){
   const stamp=++integrationLoad;
@@ -152,6 +154,20 @@ document.addEventListener('click',event=>{
   if(provider){openProviderDetails(provider.dataset.providerAction);return}
   if(event.target.closest('[data-close-connection]'))$('#integration-detail-dialog')?.close();
   if(event.target.closest('[data-open-domain-connections]')){category='Settings';view='API connections';render()}
+});
+async function startOAuthConnection(provider){
+  const button=document.querySelector(`[data-oauth-connect="${CSS.escape(provider)}"]`);
+  if(button)button.disabled=true;
+  try{
+    const response=await fetch('/api/integrations/oauth',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'start',tenant_id:integrationTenantId,provider})});
+    const data=await response.json();
+    if(!response.ok)throw new Error(data.error||'Could not start platform sign-in.');
+    location.assign(data.authorization_url);
+  }catch(error){toast(error.message||'Could not start platform sign-in.');if(button)button.disabled=false}
+}
+document.addEventListener('click',event=>{
+  const oauth=event.target.closest('[data-oauth-connect]');
+  if(oauth){void startOAuthConnection(oauth.dataset.oauthConnect);return}
 });
 document.addEventListener('submit',async event=>{
   if(event.target.id!=='provider-connect-form')return;
