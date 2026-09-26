@@ -30,5 +30,5 @@ export async function POST(request: Request) {
     env.DB.prepare("UPDATE organizations SET name = ?, legal_name = ?, primary_domain = ?, timezone = ? WHERE id = ?").bind(data.company_name, data.legal_name || null, data.primary_domain || null, data.timezone, org.id),
     env.DB.prepare("INSERT INTO onboarding_profiles (tenant_id, industry, team_size, goals_json, phone, website, completed_at) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP) ON CONFLICT(tenant_id) DO UPDATE SET industry = excluded.industry, team_size = excluded.team_size, goals_json = excluded.goals_json, phone = excluded.phone, website = excluded.website, completed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP").bind(org.id, data.industry, data.team_size, JSON.stringify(data.goals), data.phone || null, data.website || null),
   ]);
-  return json({ ok: true, redirect: "/workspace.html" });
+  return json({ ok: true, redirect: "/console.html" });
 }
