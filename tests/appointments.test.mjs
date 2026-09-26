@@ -120,6 +120,16 @@ test("rescheduling invalidates the previous schedule and advances its version", 
   assert.ok([...store.jobs.values()].some(job => job.appointment_version === 2 && job.status === "dry_run"));
 });
 
+test("a reschedule that loses its version race returns conflict without adding jobs", async () => {
+  const store = new MemoryBookingStore();
+  const input = { member_tenant_id: "tenant-1", tenant_id: "tenant-1", user_id: "owner-1", contact_id: "contact-1", starts_at: "2026-09-29T15:00:00.000Z" };
+  const booked = await bookAppointment(store, input, new Date("2026-09-28T14:00:00.000Z"));
+  const existingJobCount = store.jobs.size;
+  store.rescheduleWithJobs = async () => false;
+  await assert.rejects(rescheduleAppointment(store, { ...input, appointment_id: booked.id, starts_at: "2026-09-29T16:00:00.000Z" }, new Date("2026-09-28T14:00:00.000Z")), { status: 409 });
+  assert.equal(store.jobs.size, existingJobCount);
+});
+
 test("cancellation skips every pending dry-run job", async () => {
   const store = new MemoryBookingStore();
   const booked = await bookAppointment(store, { member_tenant_id: "tenant-1", tenant_id: "tenant-1", user_id: "owner-1", contact_id: "contact-1", starts_at: "2026-09-29T15:00:00.000Z" }, new Date("2026-09-28T14:00:00.000Z"));
@@ -156,6 +166,11 @@ test("migration rejects concurrent overlapping bookings but permits adjacent slo
   const reminder = db.prepare("INSERT OR IGNORE INTO appointment_reminder_jobs (id, tenant_id, appointment_id, appointment_version, reminder_kind, channel, due_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
   reminder.run("job-one", "t1", "a1", 1, "24h", "email", "2026-09-28T15:00:00.000Z");
   reminder.run("job-two", "t1", "a1", 1, "24h", "email", "2026-09-28T15:00:00.000Z");
+  assert.equal(db.prepare("SELECT count(*) AS count FROM appointment_reminder_jobs WHERE appointment_id = 'a1'").get().count, 1);
+  db.prepare("UPDATE appointments SET status = 'cancelled', version = 2 WHERE id = 'a1'").run();
+  const guardedReminder = db.prepare("INSERT OR IGNORE INTO appointment_reminder_jobs (id, tenant_id, appointment_id, appointment_version, reminder_kind, channel, due_at, status) SELECT ?, ?, ?, ?, ?, ?, ?, 'dry_run' WHERE EXISTS (SELECT 1 FROM appointments WHERE tenant_id = ? AND id = ? AND status = 'booked' AND version = ?)");
+  const staleInsert = guardedReminder.run("job-after-cancel", "t1", "a1", 2, "24h", "email", "2026-09-28T15:00:00.000Z", "t1", "a1", 2);
+  assert.equal(staleInsert.changes, 0);
   assert.equal(db.prepare("SELECT count(*) AS count FROM appointment_reminder_jobs WHERE appointment_id = 'a1'").get().count, 1);
   db.close();
 });

@@ -99,10 +99,10 @@ function createStore(db: D1Database, member: Member, user: Identity): BookingSto
     async rescheduleWithJobs(appointment, previousVersion, jobs) {
       const result = await db.batch([
         db.prepare("UPDATE appointments SET starts_at = ?, ends_at = ?, timezone = ?, version = ?, updated_at = CURRENT_TIMESTAMP WHERE tenant_id = ? AND owner_user_id = ? AND id = ? AND status = 'booked' AND version = ?").bind(appointment.starts_at, appointment.ends_at, appointment.timezone, appointment.version, appointment.tenant_id, appointment.owner_user_id, appointment.id, previousVersion),
-        db.prepare("UPDATE appointment_reminder_jobs SET status = 'skipped' WHERE tenant_id = ? AND appointment_id = ? AND appointment_version = ? AND status = 'dry_run' AND EXISTS (SELECT 1 FROM appointments WHERE tenant_id = ? AND id = ? AND version = ?)").bind(appointment.tenant_id, appointment.id, previousVersion, appointment.tenant_id, appointment.id, appointment.version),
-        ...jobs.map(job => jobInsert(db, appointment.tenant_id)(job, appointment.id, appointment.version)),
-        db.prepare("INSERT OR IGNORE INTO activities (id, tenant_id, contact_id, kind, summary, actor_user_id) SELECT ?, ?, contact_id, 'demo_rescheduled', ?, ? FROM appointments WHERE tenant_id = ? AND id = ? AND version = ?").bind(`${appointment.id}:${appointment.version}:activity`, appointment.tenant_id, `Demo rescheduled for ${appointment.starts_at}`, user.id, appointment.tenant_id, appointment.id, appointment.version),
-        db.prepare("INSERT OR IGNORE INTO audit_events (id, tenant_id, actor_user_id, kind, target_type, target_id, details_json) SELECT ?, ?, ?, 'appointment.rescheduled', 'appointment', ?, ? WHERE EXISTS (SELECT 1 FROM appointments WHERE tenant_id = ? AND id = ? AND version = ?)").bind(`${appointment.id}:${appointment.version}:audit`, appointment.tenant_id, user.id, appointment.id, JSON.stringify({ version: appointment.version }), appointment.tenant_id, appointment.id, appointment.version),
+        db.prepare("UPDATE appointment_reminder_jobs SET status = 'skipped' WHERE tenant_id = ? AND appointment_id = ? AND appointment_version = ? AND status = 'dry_run' AND EXISTS (SELECT 1 FROM appointments WHERE tenant_id = ? AND id = ? AND status = 'booked' AND version = ?)").bind(appointment.tenant_id, appointment.id, previousVersion, appointment.tenant_id, appointment.id, appointment.version),
+        ...jobs.map(job => jobInsertForActiveVersion(db, appointment.tenant_id, appointment.id, appointment.version, job)),
+        db.prepare("INSERT OR IGNORE INTO activities (id, tenant_id, contact_id, kind, summary, actor_user_id) SELECT ?, ?, contact_id, 'demo_rescheduled', ?, ? FROM appointments WHERE tenant_id = ? AND id = ? AND status = 'booked' AND version = ?").bind(`${appointment.id}:${appointment.version}:activity`, appointment.tenant_id, `Demo rescheduled for ${appointment.starts_at}`, user.id, appointment.tenant_id, appointment.id, appointment.version),
+        db.prepare("INSERT OR IGNORE INTO audit_events (id, tenant_id, actor_user_id, kind, target_type, target_id, details_json) SELECT ?, ?, ?, 'appointment.rescheduled', 'appointment', ?, ? WHERE EXISTS (SELECT 1 FROM appointments WHERE tenant_id = ? AND id = ? AND status = 'booked' AND version = ?)").bind(`${appointment.id}:${appointment.version}:audit`, appointment.tenant_id, user.id, appointment.id, JSON.stringify({ version: appointment.version }), appointment.tenant_id, appointment.id, appointment.version),
       ]);
       return Number(result[0]?.meta?.changes ?? 0) > 0;
     },
@@ -123,6 +123,10 @@ function createStore(db: D1Database, member: Member, user: Identity): BookingSto
 
 function jobInsert(db: D1Database, tenantId: string) {
   return (job: ReminderJob, appointmentId?: string, version?: number) => db.prepare("INSERT OR IGNORE INTO appointment_reminder_jobs (id, tenant_id, appointment_id, appointment_version, reminder_kind, channel, due_at, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'dry_run')").bind(job.id, tenantId, appointmentId ?? job.appointment_id, version ?? job.appointment_version, job.reminder_kind, job.channel, job.due_at);
+}
+
+function jobInsertForActiveVersion(db: D1Database, tenantId: string, appointmentId: string, version: number, job: ReminderJob) {
+  return db.prepare("INSERT OR IGNORE INTO appointment_reminder_jobs (id, tenant_id, appointment_id, appointment_version, reminder_kind, channel, due_at, status) SELECT ?, ?, ?, ?, ?, ?, ?, 'dry_run' WHERE EXISTS (SELECT 1 FROM appointments WHERE tenant_id = ? AND id = ? AND status = 'booked' AND version = ?)").bind(job.id, tenantId, appointmentId, version, job.reminder_kind, job.channel, job.due_at, tenantId, appointmentId, version);
 }
 
 async function handle(request: Request) {

@@ -23,6 +23,7 @@ Status meanings follow `docs/product-blueprint.md`: Not started, UI only, Backen
 - Overlap checks run in the service and are also enforced by SQLite insert/update triggers, scoped to a tenant and appointment owner. Back-to-back appointments are allowed.
 - Reminder jobs use the blueprint's confirmation and 24-hour/4-hour/15-minute schedule, omit elapsed reminders, and have a unique appointment/version/kind/channel key. Reschedule advances the version and skips old jobs; cancellation skips outstanding jobs. Status is `dry_run`; there is no sender or job dispatcher in this slice.
 - Appointment mutations use the same tenant/record-scope visibility as appointment listing. Managers can reschedule/cancel visible team or organization appointments while availability and collision checks remain tied to the appointment owner. Lifecycle audit/activity identifiers are deterministic per appointment version to avoid duplicate entries on retries.
+- Reschedule jobs and lifecycle logs are inserted only when the appointment remains booked at the expected new version inside the D1 batch. A concurrent cancellation therefore cannot leave orphaned reminder jobs or a false reschedule audit event.
 - Existing form intake routes and payloads are unchanged. CRM contact deletion now cleans linked appointment jobs and records; private API opportunity deletion unlinks appointments before deleting the opportunity.
 
 ## Staging walkthrough evidence
@@ -30,12 +31,13 @@ Status meanings follow `docs/product-blueprint.md`: Not started, UI only, Backen
 - Isolated Worker: `saaslaunchupcrm-staging`; custom domain `staging.saaslaunchup.com` remains behind the existing Cloudflare Access owner allowlist. The production apex remains attached to `saaslaunchupcrm`.
 - Isolated D1: `saaslaunchup-staging` (`02d7282f-339e-4587-91c6-1ef085250113`); migration ledger reports no pending migrations through `0016_robust_veda.sql`. The production D1 was not modified.
 - A staging-only organization and contacts were created through the authenticated CRM API. Live UI/API checks: book returned `201`; duplicate slot returned `409`; UI reschedule incremented the appointment version and invalidated the old schedule; cancel marked it cancelled and skipped remaining jobs; an unknown tenant returned `403`.
+- A concurrent staging reschedule/cancel check returned `409` for the stale reschedule and `200` for cancellation; the final appointment was cancelled, all seven existing jobs were skipped, and no stale-version jobs were created.
 - Website form intake returned `201` for a new staging lead and `200` with `duplicate: true` on retry with the same idempotency key. The generated website API key remained in the browser execution context and was not written to this document.
 - All reminder rows remained `dry_run`; no email, SMS, calling, payment, or external calendar delivery was attempted.
 
 ## Test and build evidence
 
-- `npm test`: 14 tests passed, 0 failed on 2026-09-25. Covers availability/timezone and closing boundaries, overlap boundaries, booking, manager/owner reschedule and cancellation scopes, tenant isolation, deterministic duplicate reminder jobs, and SQLite migration triggers/unique constraints.
+- `npm test`: 15 tests passed, 0 failed on 2026-09-25. Covers availability/timezone and closing boundaries, overlap boundaries, booking, manager/owner reschedule and cancellation scopes, stale reschedule cancellation races, tenant isolation, deterministic duplicate reminder jobs, and SQLite migration triggers/unique constraints.
 - `npx eslint app/api/crm/route.ts 'app/api/v1/private/[resource]/route.ts' app/api/appointments/route.ts lib/appointments.ts db/schema.ts public/views.js tests/appointments.test.mjs`: 0 errors; two existing unused-variable warnings in `public/views.js` (`renderCompanies`, `dashboardTenantId`).
 - `npm run build`: passed and includes `/api/appointments`.
 - `npx tsc --noEmit --pretty false`: appointment changes type-check; the command still reports three existing WebCrypto/JWK typing errors in `lib/access-identity.ts` (`JsonWebKey.kid` and `BufferSource` compatibility).
