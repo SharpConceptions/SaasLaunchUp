@@ -8,7 +8,9 @@ class MemoryBookingStore {
   config = { timezone: "America/Chicago", duration_minutes: 30, windows: [{ weekday: 2, start: "09:00", end: "17:00" }] };
   appointments = new Map();
   jobs = new Map();
-  async getAvailability(tenantId) { return tenantId === "tenant-1" ? this.config : null; }
+  sharedAppointmentAccess = new Set();
+  availabilityLookups = [];
+  async getAvailability(tenantId, ownerUserId) { this.availabilityLookups.push(ownerUserId); return tenantId === "tenant-1" ? this.config : null; }
   async hasContact(tenantId, contactId) { return tenantId === "tenant-1" && contactId === "contact-1"; }
   async hasOpportunity(tenantId, opportunityId, contactId) { return tenantId === "tenant-1" && opportunityId === "deal-1" && contactId === "contact-1"; }
   async hasOverlap(tenantId, ownerUserId, startsAt, endsAt, excludingId) {
@@ -19,9 +21,10 @@ class MemoryBookingStore {
     this.appointments.set(item.id, item);
     this.insertJobs(jobs);
   }
-  async getAppointment(tenantId, ownerUserId, appointmentId) {
+  async getAppointment(tenantId, actorUserId, appointmentId) {
     const item = this.appointments.get(appointmentId);
-    return item?.tenant_id === tenantId && item.owner_user_id === ownerUserId ? item : null;
+    const canSee = item?.owner_user_id === actorUserId || this.sharedAppointmentAccess.has(`${actorUserId}:${item?.owner_user_id}`);
+    return item?.tenant_id === tenantId && canSee ? item : null;
   }
   async rescheduleWithJobs(item, previousVersion, jobs) {
     const current = this.appointments.get(item.id);
@@ -32,8 +35,8 @@ class MemoryBookingStore {
     this.insertJobs(jobs);
     return true;
   }
-  async cancelWithJobs(tenantId, ownerUserId, appointmentId) {
-    const current = await this.getAppointment(tenantId, ownerUserId, appointmentId);
+  async cancelWithJobs(tenantId, actorUserId, appointmentId) {
+    const current = await this.getAppointment(tenantId, actorUserId, appointmentId);
     if (!current) return false;
     this.appointments.set(appointmentId, { ...current, status: "cancelled", version: current.version + 1 });
     for (const [id, job] of this.jobs) if (job.appointment_id === appointmentId && job.status === "dry_run") this.jobs.set(id, { ...job, status: "skipped" });
@@ -58,6 +61,8 @@ const appointment = overrides => ({
 test("availability uses the configured IANA timezone window", () => {
   const windows = [{ weekday: 2, start: "09:00", end: "17:00" }];
   assert.equal(isWithinAvailability("2026-09-29T15:00:00Z", "2026-09-29T15:30:00Z", "America/Chicago", windows), true);
+  assert.equal(isWithinAvailability("2026-09-29T21:30:00Z", "2026-09-29T22:00:00Z", "America/Chicago", windows), true);
+  assert.equal(isWithinAvailability("2026-09-29T21:45:00Z", "2026-09-29T22:15:00Z", "America/Chicago", windows), false);
   assert.equal(isWithinAvailability("2026-09-29T13:00:00Z", "2026-09-29T13:30:00Z", "America/Chicago", windows), false);
   assert.equal(isWithinAvailability("2026-09-29T15:00:00Z", "2026-09-29T15:30:00Z", "Invalid/Zone", windows), false);
 });
@@ -153,4 +158,23 @@ test("migration rejects concurrent overlapping bookings but permits adjacent slo
   reminder.run("job-two", "t1", "a1", 1, "24h", "email", "2026-09-28T15:00:00.000Z");
   assert.equal(db.prepare("SELECT count(*) AS count FROM appointment_reminder_jobs WHERE appointment_id = 'a1'").get().count, 1);
   db.close();
+});
+
+test("manager can reschedule a visible team appointment using its owner's availability", async () => {
+  const store = new MemoryBookingStore();
+  store.sharedAppointmentAccess.add("manager-1:owner-1");
+  const booked = await bookAppointment(store, { member_tenant_id: "tenant-1", tenant_id: "tenant-1", user_id: "owner-1", contact_id: "contact-1", starts_at: "2026-09-29T15:00:00.000Z" }, new Date("2026-09-28T14:00:00.000Z"));
+  const moved = await rescheduleAppointment(store, { member_tenant_id: "tenant-1", tenant_id: "tenant-1", user_id: "manager-1", appointment_id: booked.id, starts_at: "2026-09-29T16:00:00.000Z" }, new Date("2026-09-28T14:00:00.000Z"));
+  assert.equal(moved.owner_user_id, "owner-1");
+  assert.equal(moved.version, 2);
+  assert.equal(store.availabilityLookups.at(-1), "owner-1");
+});
+
+test("manager can cancel a visible team appointment but cannot act outside record scope", async () => {
+  const store = new MemoryBookingStore();
+  store.sharedAppointmentAccess.add("manager-1:owner-1");
+  const booked = await bookAppointment(store, { member_tenant_id: "tenant-1", tenant_id: "tenant-1", user_id: "owner-1", contact_id: "contact-1", starts_at: "2026-09-29T15:00:00.000Z" }, new Date("2026-09-28T14:00:00.000Z"));
+  await assert.rejects(cancelAppointment(store, { member_tenant_id: "tenant-1", tenant_id: "tenant-1", user_id: "manager-2", appointment_id: booked.id }), { status: 404 });
+  await cancelAppointment(store, { member_tenant_id: "tenant-1", tenant_id: "tenant-1", user_id: "manager-1", appointment_id: booked.id });
+  assert.equal(store.appointments.get(booked.id).status, "cancelled");
 });

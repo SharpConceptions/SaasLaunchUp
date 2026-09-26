@@ -51,9 +51,9 @@ export interface BookingStore {
   hasOpportunity(tenantId: string, opportunityId: string, contactId: string, userId: string): Promise<boolean>;
   hasOverlap(tenantId: string, ownerUserId: string, startsAt: string, endsAt: string, excludingId?: string): Promise<boolean>;
   createWithJobs(appointment: Appointment, jobs: ReminderJob[]): Promise<void>;
-  getAppointment(tenantId: string, ownerUserId: string, appointmentId: string): Promise<Appointment | null>;
+  getAppointment(tenantId: string, actorUserId: string, appointmentId: string): Promise<Appointment | null>;
   rescheduleWithJobs(appointment: Appointment, previousVersion: number, jobs: ReminderJob[]): Promise<boolean>;
-  cancelWithJobs(tenantId: string, ownerUserId: string, appointmentId: string): Promise<boolean>;
+  cancelWithJobs(tenantId: string, actorUserId: string, appointmentId: string): Promise<boolean>;
 }
 
 export class BookingError extends Error {
@@ -78,11 +78,12 @@ function localParts(value: Date, timezone: string) {
     weekday: "short",
     hour: "2-digit",
     minute: "2-digit",
+    second: "2-digit",
     hourCycle: "h23",
   }).formatToParts(value);
   const read = (type: string) => parts.find(part => part.type === type)?.value ?? "";
   const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  return { weekday: weekdays.indexOf(read("weekday")), minute: Number(read("hour")) * 60 + Number(read("minute")) };
+  return { weekday: weekdays.indexOf(read("weekday")), minute: Number(read("hour")) * 60 + Number(read("minute")) + Number(read("second")) / 60 };
 }
 
 function minuteOfDay(value: string) {
@@ -130,9 +131,9 @@ export function canAccessTenant(memberTenantId: string | null, requestedTenantId
   return memberTenantId === requestedTenantId;
 }
 
-async function checkedSlot(store: BookingStore, input: BookingInput, now: Date, excludingId?: string) {
+async function checkedSlot(store: BookingStore, input: BookingInput, now: Date, ownerUserId = input.user_id, excludingId?: string, validateCrmLinks = true) {
   if (!canAccessTenant(input.member_tenant_id, input.tenant_id)) throw new BookingError(403, "Organization access is required.");
-  const config = await store.getAvailability(input.tenant_id, input.user_id);
+  const config = await store.getAvailability(input.tenant_id, ownerUserId);
   if (!config) throw new BookingError(400, "Set availability before booking an appointment.");
   const start = new Date(input.starts_at);
   if (!Number.isFinite(start.getTime()) || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:00(?:\.000)?Z$/.test(input.starts_at)) throw new BookingError(400, "Choose a valid appointment start time in UTC.");
@@ -140,9 +141,9 @@ async function checkedSlot(store: BookingStore, input: BookingInput, now: Date, 
   if (!Number.isInteger(config.duration_minutes) || config.duration_minutes < 5 || config.duration_minutes > 240) throw new BookingError(400, "Appointment duration is not configured correctly.");
   const end = new Date(start.getTime() + config.duration_minutes * 60_000).toISOString();
   if (!isWithinAvailability(input.starts_at, end, config.timezone, config.windows)) throw new BookingError(400, "Choose a time within the configured availability.");
-  if (!await store.hasContact(input.tenant_id, input.contact_id, input.user_id)) throw new BookingError(404, "Contact not found.");
-  if (input.opportunity_id && !await store.hasOpportunity(input.tenant_id, input.opportunity_id, input.contact_id, input.user_id)) throw new BookingError(400, "Choose an opportunity linked to this contact.");
-  if (await store.hasOverlap(input.tenant_id, input.user_id, input.starts_at, end, excludingId)) throw new BookingError(409, "That time is already booked.");
+  if (validateCrmLinks && !await store.hasContact(input.tenant_id, input.contact_id, input.user_id)) throw new BookingError(404, "Contact not found.");
+  if (validateCrmLinks && input.opportunity_id && !await store.hasOpportunity(input.tenant_id, input.opportunity_id, input.contact_id, input.user_id)) throw new BookingError(400, "Choose an opportunity linked to this contact.");
+  if (await store.hasOverlap(input.tenant_id, ownerUserId, input.starts_at, end, excludingId)) throw new BookingError(409, "That time is already booked.");
   return { config, endsAt: end };
 }
 
@@ -163,7 +164,7 @@ export async function rescheduleAppointment(store: BookingStore, input: Omit<Boo
   const current = await store.getAppointment(input.tenant_id, input.user_id, input.appointment_id);
   if (!current) throw new BookingError(404, "Appointment not found.");
   if (current.status !== "booked") throw new BookingError(409, "Cancelled appointments cannot be rescheduled.");
-  const { config, endsAt } = await checkedSlot(store, { ...input, contact_id: current.contact_id }, now, current.id);
+  const { config, endsAt } = await checkedSlot(store, { ...input, contact_id: current.contact_id }, now, current.owner_user_id, current.id, false);
   const updated = { ...current, starts_at: new Date(input.starts_at).toISOString(), ends_at: endsAt, timezone: config.timezone, version: current.version + 1 };
   const saved = await store.rescheduleWithJobs(updated, current.version, reminderJobs(updated, now));
   if (!saved) throw new BookingError(409, "Appointment changed; reload and try again.");

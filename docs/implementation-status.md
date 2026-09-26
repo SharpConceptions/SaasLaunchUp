@@ -22,11 +22,12 @@ Status meanings follow `docs/product-blueprint.md`: Not started, UI only, Backen
 - Appointments require a visible CRM contact and may reference a tenant- and scope-visible opportunity. Booking, rescheduling, and cancellation append CRM activity and audit records.
 - Overlap checks run in the service and are also enforced by SQLite insert/update triggers, scoped to a tenant and appointment owner. Back-to-back appointments are allowed.
 - Reminder jobs use the blueprint's confirmation and 24-hour/4-hour/15-minute schedule, omit elapsed reminders, and have a unique appointment/version/kind/channel key. Reschedule advances the version and skips old jobs; cancellation skips outstanding jobs. Status is `dry_run`; there is no sender or job dispatcher in this slice.
+- Appointment mutations use the same tenant/record-scope visibility as appointment listing. Managers can reschedule/cancel visible team or organization appointments while availability and collision checks remain tied to the appointment owner. Lifecycle audit/activity identifiers are deterministic per appointment version to avoid duplicate entries on retries.
 - Existing form intake routes and payloads are unchanged. CRM contact deletion now cleans linked appointment jobs and records; private API opportunity deletion unlinks appointments before deleting the opportunity.
 
 ## Test and build evidence
 
-- `npm test`: 12 tests passed, 0 failed on 2026-09-25. Covers availability/timezone, overlap boundaries, booking, reschedule, cancellation, tenant isolation, deterministic duplicate reminder jobs, and SQLite migration triggers/unique constraints.
+- `npm test`: 14 tests passed, 0 failed on 2026-09-25. Covers availability/timezone and closing boundaries, overlap boundaries, booking, manager/owner reschedule and cancellation scopes, tenant isolation, deterministic duplicate reminder jobs, and SQLite migration triggers/unique constraints.
 - `npx eslint app/api/crm/route.ts 'app/api/v1/private/[resource]/route.ts' app/api/appointments/route.ts lib/appointments.ts db/schema.ts public/views.js tests/appointments.test.mjs`: 0 errors; two existing unused-variable warnings in `public/views.js` (`renderCompanies`, `dashboardTenantId`).
 - `npm run build`: passed and includes `/api/appointments`.
 - `npx tsc --noEmit --pretty false`: appointment changes type-check; the command still reports three existing WebCrypto/JWK typing errors in `lib/access-identity.ts` (`JsonWebKey.kid` and `BufferSource` compatibility).

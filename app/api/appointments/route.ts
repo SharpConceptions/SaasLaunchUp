@@ -94,27 +94,27 @@ function createStore(db: D1Database, member: Member, user: Identity): BookingSto
     },
     async getAppointment(tenantId, ownerUserId, appointmentId) {
       const visible = recordFilter(member, tenantId, ownerUserId, "a.owner_user_id");
-      return db.prepare(`SELECT a.id, a.tenant_id, a.owner_user_id, a.contact_id, a.opportunity_id, a.title, a.starts_at, a.ends_at, a.timezone, a.version, a.status FROM appointments a WHERE a.tenant_id = ? AND a.owner_user_id = ? AND a.id = ?${visible.sql}`).bind(tenantId, ownerUserId, appointmentId, ...visible.args).first();
+      return db.prepare(`SELECT a.id, a.tenant_id, a.owner_user_id, a.contact_id, a.opportunity_id, a.title, a.starts_at, a.ends_at, a.timezone, a.version, a.status FROM appointments a WHERE a.tenant_id = ? AND a.id = ?${visible.sql}`).bind(tenantId, appointmentId, ...visible.args).first();
     },
     async rescheduleWithJobs(appointment, previousVersion, jobs) {
       const result = await db.batch([
         db.prepare("UPDATE appointments SET starts_at = ?, ends_at = ?, timezone = ?, version = ?, updated_at = CURRENT_TIMESTAMP WHERE tenant_id = ? AND owner_user_id = ? AND id = ? AND status = 'booked' AND version = ?").bind(appointment.starts_at, appointment.ends_at, appointment.timezone, appointment.version, appointment.tenant_id, appointment.owner_user_id, appointment.id, previousVersion),
         db.prepare("UPDATE appointment_reminder_jobs SET status = 'skipped' WHERE tenant_id = ? AND appointment_id = ? AND appointment_version = ? AND status = 'dry_run' AND EXISTS (SELECT 1 FROM appointments WHERE tenant_id = ? AND id = ? AND version = ?)").bind(appointment.tenant_id, appointment.id, previousVersion, appointment.tenant_id, appointment.id, appointment.version),
         ...jobs.map(job => jobInsert(db, appointment.tenant_id)(job, appointment.id, appointment.version)),
-        db.prepare("INSERT INTO activities (id, tenant_id, contact_id, kind, summary, actor_user_id) SELECT ?, ?, contact_id, 'demo_rescheduled', ?, ? FROM appointments WHERE tenant_id = ? AND id = ? AND version = ?").bind(crypto.randomUUID(), appointment.tenant_id, `Demo rescheduled for ${appointment.starts_at}`, user.id, appointment.tenant_id, appointment.id, appointment.version),
-        db.prepare("INSERT INTO audit_events (id, tenant_id, actor_user_id, kind, target_type, target_id, details_json) SELECT ?, ?, ?, 'appointment.rescheduled', 'appointment', ?, ? WHERE EXISTS (SELECT 1 FROM appointments WHERE tenant_id = ? AND id = ? AND version = ?)").bind(crypto.randomUUID(), appointment.tenant_id, user.id, appointment.id, JSON.stringify({ version: appointment.version }), appointment.tenant_id, appointment.id, appointment.version),
+        db.prepare("INSERT OR IGNORE INTO activities (id, tenant_id, contact_id, kind, summary, actor_user_id) SELECT ?, ?, contact_id, 'demo_rescheduled', ?, ? FROM appointments WHERE tenant_id = ? AND id = ? AND version = ?").bind(`${appointment.id}:${appointment.version}:activity`, appointment.tenant_id, `Demo rescheduled for ${appointment.starts_at}`, user.id, appointment.tenant_id, appointment.id, appointment.version),
+        db.prepare("INSERT OR IGNORE INTO audit_events (id, tenant_id, actor_user_id, kind, target_type, target_id, details_json) SELECT ?, ?, ?, 'appointment.rescheduled', 'appointment', ?, ? WHERE EXISTS (SELECT 1 FROM appointments WHERE tenant_id = ? AND id = ? AND version = ?)").bind(`${appointment.id}:${appointment.version}:audit`, appointment.tenant_id, user.id, appointment.id, JSON.stringify({ version: appointment.version }), appointment.tenant_id, appointment.id, appointment.version),
       ]);
       return Number(result[0]?.meta?.changes ?? 0) > 0;
     },
-    async cancelWithJobs(tenantId, ownerUserId, appointmentId) {
-      const current = await this.getAppointment(tenantId, ownerUserId, appointmentId) as { version: number; contact_id: string; status: string } | null;
+    async cancelWithJobs(tenantId, actorUserId, appointmentId) {
+      const current = await this.getAppointment(tenantId, actorUserId, appointmentId) as { version: number; owner_user_id: string; contact_id: string; status: string } | null;
       if (!current || current.status !== "booked") return false;
       const nextVersion = current.version + 1;
       const result = await db.batch([
-        db.prepare("UPDATE appointments SET status = 'cancelled', version = ?, updated_at = CURRENT_TIMESTAMP WHERE tenant_id = ? AND owner_user_id = ? AND id = ? AND status = 'booked' AND version = ?").bind(nextVersion, tenantId, ownerUserId, appointmentId, current.version),
+        db.prepare("UPDATE appointments SET status = 'cancelled', version = ?, updated_at = CURRENT_TIMESTAMP WHERE tenant_id = ? AND owner_user_id = ? AND id = ? AND status = 'booked' AND version = ?").bind(nextVersion, tenantId, current.owner_user_id, appointmentId, current.version),
         db.prepare("UPDATE appointment_reminder_jobs SET status = 'skipped' WHERE tenant_id = ? AND appointment_id = ? AND status = 'dry_run' AND EXISTS (SELECT 1 FROM appointments WHERE tenant_id = ? AND id = ? AND status = 'cancelled' AND version = ?)").bind(tenantId, appointmentId, tenantId, appointmentId, nextVersion),
-        db.prepare("INSERT INTO activities (id, tenant_id, contact_id, kind, summary, actor_user_id) SELECT ?, ?, ?, 'demo_cancelled', 'Demo appointment cancelled', ? WHERE EXISTS (SELECT 1 FROM appointments WHERE tenant_id = ? AND id = ? AND status = 'cancelled' AND version = ?)").bind(crypto.randomUUID(), tenantId, current.contact_id, user.id, tenantId, appointmentId, nextVersion),
-        db.prepare("INSERT INTO audit_events (id, tenant_id, actor_user_id, kind, target_type, target_id, details_json) SELECT ?, ?, ?, 'appointment.cancelled', 'appointment', ?, ? WHERE EXISTS (SELECT 1 FROM appointments WHERE tenant_id = ? AND id = ? AND status = 'cancelled' AND version = ?)").bind(crypto.randomUUID(), tenantId, user.id, appointmentId, JSON.stringify({ version: nextVersion }), tenantId, appointmentId, nextVersion),
+        db.prepare("INSERT OR IGNORE INTO activities (id, tenant_id, contact_id, kind, summary, actor_user_id) SELECT ?, ?, ?, 'demo_cancelled', 'Demo appointment cancelled', ? WHERE EXISTS (SELECT 1 FROM appointments WHERE tenant_id = ? AND id = ? AND status = 'cancelled' AND version = ?)").bind(`${appointmentId}:${nextVersion}:activity`, tenantId, current.contact_id, user.id, tenantId, appointmentId, nextVersion),
+        db.prepare("INSERT OR IGNORE INTO audit_events (id, tenant_id, actor_user_id, kind, target_type, target_id, details_json) SELECT ?, ?, ?, 'appointment.cancelled', 'appointment', ?, ? WHERE EXISTS (SELECT 1 FROM appointments WHERE tenant_id = ? AND id = ? AND status = 'cancelled' AND version = ?)").bind(`${appointmentId}:${nextVersion}:audit`, tenantId, user.id, appointmentId, JSON.stringify({ version: nextVersion }), tenantId, appointmentId, nextVersion),
       ]);
       return Number(result[0]?.meta?.changes ?? 0) > 0;
     },
@@ -141,7 +141,7 @@ async function handle(request: Request) {
     if (resource !== "appointments") fail(400, "Choose availability or appointments.");
     const visible = recordFilter(member, tenantId, user.id, "a.owner_user_id");
     const [appointments, jobs] = await Promise.all([
-      db.prepare(`SELECT a.id, a.contact_id, c.name AS contact_name, a.opportunity_id, a.title, a.starts_at, a.ends_at, a.timezone, a.version, a.status FROM appointments a JOIN contacts c ON c.tenant_id = a.tenant_id AND c.id = a.contact_id WHERE a.tenant_id = ?${visible.sql} ORDER BY a.starts_at DESC LIMIT 100`).bind(tenantId, ...visible.args).all(),
+      db.prepare(`SELECT a.id, a.contact_id, c.name AS contact_name, a.opportunity_id, a.title, a.starts_at, a.ends_at, a.timezone, COALESCE((SELECT av.timezone FROM appointment_availability av WHERE av.tenant_id = a.tenant_id AND av.owner_user_id = a.owner_user_id), a.timezone) AS reschedule_timezone, a.version, a.status FROM appointments a JOIN contacts c ON c.tenant_id = a.tenant_id AND c.id = a.contact_id WHERE a.tenant_id = ?${visible.sql} ORDER BY a.starts_at DESC LIMIT 100`).bind(tenantId, ...visible.args).all(),
       db.prepare(`SELECT j.id, j.appointment_id, j.appointment_version, j.reminder_kind, j.channel, j.due_at, j.status FROM appointment_reminder_jobs j JOIN appointments a ON a.tenant_id = j.tenant_id AND a.id = j.appointment_id WHERE j.tenant_id = ?${visible.sql} ORDER BY j.due_at LIMIT 300`).bind(tenantId, ...visible.args).all(),
     ]);
     return json({ items: appointments.results, reminder_jobs: jobs.results, delivery_mode: "dry_run" });
