@@ -27,3 +27,4 @@ The admin Dashboard has Overview, Pipeline, Awareness, Consideration, Purchase, 
 Run `npm ci` and `npm run build`. After schema changes, regenerate the migration. The hosted Site is owner-private. Customer identity and invitations are not yet implemented. Do not onboard external companies until that access model is complete.
 
 See `../docs/FOUNDATION_AND_INTEGRATIONS.md` for the rollout and provider requirements.
+![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/SharpConceptions/SaasLaunchUp?utm_source=oss&utm_medium=github&utm_campaign=SharpConceptions%2FSaasLaunchUp&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
