@@ -6,7 +6,7 @@ import { getRequestIdentity } from "../../../lib/access-identity";
 const credentials = z.object({
   action: z.enum(["login", "register", "forgot"]),
   email: z.string().trim().email().max(254),
-  password: z.string().min(12).max(200),
+  password: z.string().min(12).max(200).optional(),
   display_name: z.string().trim().min(1).max(160).optional(),
   company_name: z.string().trim().min(1).max(160).optional(),
 }).strict();
@@ -33,6 +33,7 @@ export async function POST(request: Request) {
   }
 
   if (data.action === "login") {
+    if (!data.password) return response({ error: "Enter your password." }, 400);
     const user = await env.DB.prepare("SELECT id, email, display_name, password_hash FROM users WHERE lower(email) = ? LIMIT 1").bind(email).first<{ id: string; email: string; display_name: string | null; password_hash: string | null }>();
     if (!user?.password_hash || !(await verifyPassword(data.password, user.password_hash))) return response({ error: "The email or password is incorrect." }, 401);
     const session = await createSession(user.id);
@@ -44,6 +45,7 @@ export async function POST(request: Request) {
   if (existing) return response({ error: "An account already exists for this email. Sign in instead." }, 409);
   const userId = crypto.randomUUID();
   const organizationId = crypto.randomUUID();
+  if (!data.password) return response({ error: "Create a password with at least 12 characters." }, 400);
   const passwordHash = await hashPassword(data.password);
   await env.DB.batch([
     env.DB.prepare("INSERT INTO users (id, email, display_name, password_hash) VALUES (?, ?, ?, ?)").bind(userId, email, data.display_name, passwordHash),

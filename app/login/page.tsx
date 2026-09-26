@@ -38,6 +38,6 @@ export default function LoginPage() {
       {error ? <p className="auth-error" role="alert">{error}</p> : null}{message ? <p className="auth-success" role="status">{message}</p> : null}
       <button type="submit" disabled={busy}>{busy ? "Please wait..." : mode === "login" ? "Sign in" : mode === "register" ? "Create account" : "Send reset instructions"}</button>
     </form>
-    {mode === "login" ? <><button className="google-button" type="button" onClick={() => setError("Google sign-in is not configured yet. Use email and password for now.")}>Continue with Google</button><button className="auth-link" type="button" onClick={() => { setMode("forgot"); setError(""); }}>Forgot password?</button><button className="auth-switch" type="button" onClick={() => { setMode("register"); setError(""); }}>Create an account</button></> : <button className="auth-switch" type="button" onClick={() => { setMode("login"); setError(""); }}>Back to sign in</button>}
+    {mode === "login" ? <><button className="google-button" type="button" onClick={() => { window.location.assign("/api/auth/google"); }}>Continue with Google</button><button className="auth-link" type="button" onClick={() => { setMode("forgot"); setError(""); }}>Forgot password?</button><button className="auth-switch" type="button" onClick={() => { setMode("register"); setError(""); }}>Create an account</button></> : <button className="auth-switch" type="button" onClick={() => { setMode("login"); setError(""); }}>Back to sign in</button>}
   </section></main>;
 }
