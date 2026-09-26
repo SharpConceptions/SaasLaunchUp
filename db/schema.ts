@@ -25,6 +25,10 @@ export const authOAuthStates = sqliteTable("auth_oauth_states", {
   state: text("state").primaryKey(), codeVerifier: text("code_verifier").notNull(), redirectUri: text("redirect_uri").notNull(),
   returnTo: text("return_to").notNull(), expiresAt: text("expires_at").notNull(), createdAt: timestamp(),
 }, table => [index("idx_auth_oauth_states_expiry").on(table.expiresAt)]);
+export const authPasswordResets = sqliteTable("auth_password_resets", {
+  id: text("id").primaryKey(), userId: text("user_id").notNull().references(() => users.id),
+  tokenHash: text("token_hash").notNull(), expiresAt: text("expires_at").notNull(), usedAt: text("used_at"), createdAt: timestamp(),
+}, table => [uniqueIndex("uidx_auth_password_resets_token_hash").on(table.tokenHash), index("idx_auth_password_resets_user").on(table.userId)]);
 export const teams = sqliteTable("teams", {
   id: text("id").primaryKey(), tenantId: text("tenant_id").notNull().references(() => organizations.id),
   name: text("name").notNull(), createdAt: timestamp(),
