@@ -193,7 +193,11 @@ export async function GET(request: Request) {
     await owner(request, tenantId);
     const [twilio, stripe, resend, oauthRows] = await Promise.all([saved(tenantId), savedProvider(tenantId, "stripe"), savedProvider(tenantId, "resend"), savedOAuthConnections(tenantId)]);
     const oauth = Object.fromEntries(oauthRows.results.map(row => [row.provider, { connected: true, status: row.status, account_last4: row.account_id.slice(-4), scopes: row.scopes_json ? JSON.parse(row.scopes_json) : [], last_verified_at: row.last_verified_at }]));
-    return reply({ twilio: publicConnection(twilio), stripe: providerPublic(stripe), email: providerPublic(resend), oauth, oauth_providers: oauthProviderSummary(env as unknown as Record<string, unknown>) });
+    const managed = env as unknown as Record<string, unknown>;
+    const managedTwilio = typeof managed.TWILIO_ACCOUNT_SID === "string" && typeof managed.TWILIO_API_KEY_SID === "string" && typeof managed.TWILIO_API_KEY_SECRET === "string"
+      ? { connected: true, managed: true, status: "managed", account_sid_last4: managed.TWILIO_ACCOUNT_SID.slice(-4), api_key_sid_last4: managed.TWILIO_API_KEY_SID.slice(-4) }
+      : null;
+    return reply({ twilio: twilio ? publicConnection(twilio) : managedTwilio || { connected: false }, stripe: providerPublic(stripe), email: providerPublic(resend), oauth, oauth_providers: oauthProviderSummary(managed) });
   } catch (error) { return errorResponse(error); }
 }
 export async function POST(request: Request) {

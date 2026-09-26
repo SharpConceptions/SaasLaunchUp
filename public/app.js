@@ -1,3 +1,5 @@
+  const response=await fetch('/api/me',{credentials:'same-origin'});
+  if(response.status===401){window.location.href='/login?return_to='+encodeURIComponent(location.pathname+location.search);return;}
 const nav = {
   Dashboard: ['Overview','Pipeline','Awareness','Consideration','Purchase','Experience','Loyalty'],
   Sales: ['My dashboard','Contacts','Pipeline','Tasks','Calls','Import contacts'],
