@@ -454,9 +454,14 @@ export async function DELETE(request: Request, context: { params: Promise<{ reso
       db().prepare("UPDATE opportunities SET contact_id = NULL WHERE tenant_id = ? AND contact_id = ?").bind(tenantId, id),
       db().prepare("UPDATE documents SET contact_id = NULL WHERE tenant_id = ? AND contact_id = ?").bind(tenantId, id),
       db().prepare("DELETE FROM document_deliveries WHERE tenant_id = ? AND contact_id = ?").bind(tenantId, id),
+      db().prepare("DELETE FROM appointment_reminder_jobs WHERE tenant_id = ? AND appointment_id IN (SELECT id FROM appointments WHERE tenant_id = ? AND contact_id = ?)").bind(tenantId, tenantId, id),
+      db().prepare("DELETE FROM appointments WHERE tenant_id = ? AND contact_id = ?").bind(tenantId, id),
       ...["notes", "activities", "consent_records", "suppression_records"].map(table => db().prepare(`DELETE FROM ${table} WHERE tenant_id = ? AND contact_id = ?`).bind(tenantId, id)),
     );
-    if (name === "opportunities") statements.push(db().prepare("DELETE FROM website_form_events WHERE tenant_id = ? AND opportunity_id = ?").bind(tenantId, id));
+    if (name === "opportunities") statements.push(
+      db().prepare("UPDATE appointments SET opportunity_id = NULL WHERE tenant_id = ? AND opportunity_id = ?").bind(tenantId, id),
+      db().prepare("DELETE FROM website_form_events WHERE tenant_id = ? AND opportunity_id = ?").bind(tenantId, id),
+    );
     if (name === "companies") statements.push(db().prepare("DELETE FROM website_form_events WHERE tenant_id = ? AND company_id = ?").bind(tenantId, id));
     if (name === "documents") statements.push(db().prepare("DELETE FROM document_deliveries WHERE tenant_id = ? AND document_id = ?").bind(tenantId, id));
     statements.push(db().prepare(`DELETE FROM ${item.table} WHERE tenant_id = ? AND id = ?`).bind(tenantId, id), audit(token, `${item.type}.deleted_via_api`, item.type, id));

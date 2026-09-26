@@ -126,23 +126,104 @@ document.addEventListener('click',event=>{if(event.target.closest('[data-dashboa
 document.addEventListener('click',event=>{if(event.target.closest('[data-dashboard-refresh]')){salesDashboard=null;if(category==='Settings')renderSettingsReporting();else renderReports()}});
 function renderInbox(){ $('#main').innerHTML=header('Unified inbox','Messages and replies in one place','demo-disabled','＋ New message')+notice('Conversations shown here are sample data. Sending and reply routing are not connected.')+`<div class="surface">${conversations.map(c=>`<div class="list-row"><span class="avatar">${initials(c.name)}</span><span><h3>${escapeHTML(c.name)} ${c.unread?'<span class="status-pill">New</span>':''}</h3><p>${escapeHTML(c.excerpt)}</p></span><span class="push subtle">${c.channel} · ${c.time}</span></div>`).join('')}</div>`}
 function renderConsent(){ $('#main').innerHTML=header('Consent center','Channel permissions and suppression status')+notice('Consent evidence is sample data. Live enforcement requires verified records and server-side checks.',true)+`<div class="surface" style="overflow:auto"><table class="contacts-table"><thead><tr><th>Contact</th><th>Calls</th><th>SMS</th><th>Email</th></tr></thead><tbody>${contacts.map(c=>`<tr><td><strong>${escapeHTML(c.name)}</strong></td><td>${status(c.call)}</td><td>${status(c.sms)}</td><td>${status(c.emailStatus)}</td></tr>`).join('')}</tbody></table></div>`}
+let calendarRenderGeneration=0;
 function renderCalendar(){
-  $('#main').innerHTML=header('Calendar','Scheduled follow-up tasks')+'<div id="calendar-task-list" class="surface section-card">Loading follow-up tasks…</div>';
+  const generation=++calendarRenderGeneration,renderedView=view;
+  const pageTitle=renderedView==='Availability'?'Availability':renderedView==='Booking pages'?'Book a demo':renderedView==='Appointments'?'Appointments':'Calendar';
+  const description=renderedView==='Availability'?'Set the times when your team can accept demos.':renderedView==='Booking pages'?'Schedule a demo linked to a CRM contact.':renderedView==='Appointments'?'Review, reschedule, or cancel CRM-linked demos.':'Appointments and CRM follow-up tasks.';
+  $('#main').innerHTML=header(pageTitle,description)+'<div id="calendar-task-list" class="surface section-card">Loading calendar…</div>';
   void (async()=>{
     const root=$('#calendar-task-list');
     try{
       const orgResponse=await fetch('/api/crm?resource=organizations',{credentials:'same-origin',cache:'no-store'});
-      const orgs=await orgResponse.json();if(!orgResponse.ok)throw new Error(orgs.error||'Could not load companies.');
-      const tenantId=crmSalesTenantId||(orgs.items||[]).find(item=>['business_owner','sales_manager','sales_representative'].includes(item.role))?.id;
+      const orgs=await orgResponse.json();if(!orgResponse.ok)throw new Error(orgs.error||'Could not load organizations.');
+      const organization=(orgs.items||[]).find(item=>['business_owner','sales_manager','sales_representative'].includes(item.role));
+      const tenantId=crmSalesTenantId||organization?.id;
       if(!tenantId)throw new Error('No sales workspace is available.');
-      const response=await fetch(`/api/crm?resource=tasks&tenant_id=${encodeURIComponent(tenantId)}`,{credentials:'same-origin',cache:'no-store'});
-      const data=await response.json();if(!response.ok)throw new Error(data.error||'Could not load tasks.');
-      if(category!=='Calendars'||!$('#calendar-task-list'))return;
-      const items=(data.items||[]).filter(item=>item.due_at&&item.status==='open').sort((a,b)=>String(a.due_at).localeCompare(String(b.due_at)));
-      $('#calendar-task-list').innerHTML=`<h2>Upcoming follow-ups</h2>${items.length?items.map(item=>`<div class="list-row"><span><strong>${escapeHTML(item.title)}</strong><p>${escapeHTML(new Date(item.due_at).toLocaleString())}</p></span></div>`).join(''):'<p>No scheduled follow-ups yet. New website leads receive a follow-up task automatically.</p>'}<p class="small">Appointments and external calendar syncing require a separate calendar connection.</p>`;
-    }catch(error){if(root&&root.isConnected)root.textContent=error.message||'Could not load follow-up tasks.'}
+      crmSalesTenantId=tenantId;
+      const [tasksResponse,appointmentsResponse,availabilityResponse,contactsResponse]=await Promise.all([
+        fetch(`/api/crm?resource=tasks&tenant_id=${encodeURIComponent(tenantId)}`,{credentials:'same-origin',cache:'no-store'}),
+        fetch(`/api/appointments?resource=appointments&tenant_id=${encodeURIComponent(tenantId)}`,{credentials:'same-origin',cache:'no-store'}),
+        fetch(`/api/appointments?resource=availability&tenant_id=${encodeURIComponent(tenantId)}`,{credentials:'same-origin',cache:'no-store'}),
+        fetch(`/api/crm?resource=contacts&tenant_id=${encodeURIComponent(tenantId)}`,{credentials:'same-origin',cache:'no-store'})
+      ]);
+      const [taskData,appointmentData,availabilityData,contactData]=await Promise.all([tasksResponse.json(),appointmentsResponse.json(),availabilityResponse.json(),contactsResponse.json()]);
+      for(const [response,data,message] of [[tasksResponse,taskData,'Could not load tasks.'],[appointmentsResponse,appointmentData,'Could not load appointments.'],[availabilityResponse,availabilityData,'Could not load availability.'],[contactsResponse,contactData,'Could not load CRM contacts.']])if(!response.ok)throw new Error(data.error||message);
+      if(generation!==calendarRenderGeneration||category!=='Calendars'||view!==renderedView||!$('#calendar-task-list'))return;
+      const tasks=(taskData.items||[]).filter(item=>item.due_at&&item.status==='open').sort((a,b)=>String(a.due_at).localeCompare(String(b.due_at)));
+      const appointments=appointmentData.items||[], config=availabilityData.availability;
+      const people=contactData.items||[];
+      const timezone=config?.timezone||organization?.timezone||'America/Chicago';
+      if(renderedView==='Availability'){
+        const windows=new Map((config?.windows||[]).map(item=>[item.weekday,item]));
+        const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+        $('#calendar-task-list').innerHTML=`<form id="appointment-availability-form"><input type="hidden" name="tenant_id" value="${escapeHTML(tenantId)}"><label class="field">IANA timezone<input name="timezone" value="${escapeHTML(timezone)}" maxlength="100" required></label><label class="field">Appointment length<select name="duration_minutes">${[15,30,45,60].map(n=>`<option value="${n}" ${Number(config?.duration_minutes||30)===n?'selected':''}>${n} minutes</option>`).join('')}</select></label><div class="field-list">${days.map((day,weekday)=>{const window=windows.get(weekday);return `<div class="list-row"><label><input type="checkbox" name="weekday" value="${weekday}" ${window?'checked':''}> ${day}</label><label>From <input type="time" name="start_${weekday}" value="${escapeHTML(window?.start||'09:00')}"></label><label>To <input type="time" name="end_${weekday}" value="${escapeHTML(window?.end||'17:00')}"></label></div>`}).join('')}</div><p id="appointment-form-message" class="small" role="status"></p><button class="primary" type="submit">Save availability</button></form>`;
+      }else{
+        const contactOptions=people.map(person=>`<option value="${escapeHTML(person.id)}">${escapeHTML(person.name)}${person.company_name?` · ${escapeHTML(person.company_name)}`:''}</option>`).join('');
+        const list=appointments.length?appointments.map(item=>{
+          const jobs=(appointmentData.reminder_jobs||[]).filter(job=>job.appointment_id===item.id);
+          const rescheduleTimezone=item.reschedule_timezone||item.timezone;
+          return `<article class="list-row"><div><strong>${escapeHTML(item.title)} · ${escapeHTML(item.contact_name)}</strong><p>${escapeHTML(new Date(item.starts_at).toLocaleString(undefined,{timeZone:item.timezone}))} · ${escapeHTML(item.timezone)} · ${item.status==='booked'?'Booked':'Cancelled'}</p><p class="small">Reminder schedule: ${jobs.length?jobs.map(job=>`${escapeHTML(job.reminder_kind)} ${escapeHTML(job.channel)} · ${escapeHTML(job.status)}`).join(' · '):'none'}</p></div>${item.status==='booked'?`<form class="appointment-reschedule-form" data-appointment-id="${escapeHTML(item.id)}" data-timezone="${escapeHTML(rescheduleTimezone)}"><label>New start (${escapeHTML(rescheduleTimezone)}) <input type="datetime-local" name="starts_at" required step="900"></label><button class="secondary" type="submit">Reschedule</button><button class="secondary" type="button" data-cancel-appointment="${escapeHTML(item.id)}">Cancel</button></form>`:''}</article>`;
+        }).join(''):'<p>No demos booked yet.</p>';
+        const bookingForm=renderedView==='Booking pages'?`<form id="appointment-booking-form"><input type="hidden" name="tenant_id" value="${escapeHTML(tenantId)}"><input type="hidden" name="timezone" value="${escapeHTML(timezone)}"><label class="field">CRM contact<select name="contact_id" required><option value="">Choose a contact</option>${contactOptions}</select></label><label class="field">Start time (${escapeHTML(timezone)})<input type="datetime-local" name="starts_at" required step="900"></label><p class="small">${config?`Appointments use ${config.duration_minutes} minutes in ${escapeHTML(timezone)} time.`:'Set team availability before booking.'}</p><p id="appointment-form-message" class="small" role="status"></p><button class="primary" type="submit" ${!config||!people.length?'disabled':''}>Book demo</button></form>`:'';
+        $('#calendar-task-list').innerHTML=`${renderedView==='Booking pages'?`<section class="section-card">${config?bookingForm:'<p class="notice warn">Configure team availability before accepting bookings. <button type="button" class="secondary" data-open-availability>Set availability</button></p>'}</section>`:''}<section><h2>Demo appointments</h2>${list}<p class="small">Reminder schedule is dry-run only. No email or SMS is sent. External calendar sync is not connected.</p></section>${renderedView==='Calendar'?`<section><h2>Upcoming follow-ups</h2>${tasks.length?tasks.map(item=>`<div class="list-row"><span><strong>${escapeHTML(item.title)}</strong><p>${escapeHTML(new Date(item.due_at).toLocaleString())}</p></span></div>`).join(''):'<p>No scheduled follow-ups. New website leads receive a follow-up task automatically.</p>'}</section>`:''}`;
+      }
+    }catch(error){if(generation===calendarRenderGeneration&&root&&root.isConnected)root.textContent=error.message||'Could not load follow-up tasks.'}
   })();
 }
+function calendarLocalToUtc(value,timezone){
+  const match=/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(value);
+  if(!match)throw new Error('Choose a valid appointment time.');
+  const desired=match.slice(1).map(Number),localAsUtc=Date.UTC(desired[0],desired[1]-1,desired[2],desired[3],desired[4]);
+  let candidate=localAsUtc;
+  for(let i=0;i<4;i++){
+    const parts=new Intl.DateTimeFormat('en-US',{timeZone:timezone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date(candidate));
+    const get=type=>Number(parts.find(part=>part.type===type)?.value);
+    const represented=Date.UTC(get('year'),get('month')-1,get('day'),get('hour'),get('minute'));
+    candidate+=localAsUtc-represented;
+  }
+  const parts=new Intl.DateTimeFormat('en-US',{timeZone:timezone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date(candidate));
+  const get=type=>Number(parts.find(part=>part.type===type)?.value);
+  if(get('year')!==desired[0]||get('month')!==desired[1]||get('day')!==desired[2]||get('hour')!==desired[3]||get('minute')!==desired[4])throw new Error('That local time does not exist because of a daylight-saving clock change. Choose another time.');
+  return new Date(candidate).toISOString();
+}
+async function appointmentMutation(payload){
+  const tenantId=encodeURIComponent(payload.tenant_id);
+  const response=await fetch(`/api/appointments?tenant_id=${tenantId}`,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  const data=await response.json();
+  if(!response.ok)throw new Error(data.error||'Could not save the appointment.');
+  return data;
+}
+document.addEventListener('submit',async event=>{
+  const form=event.target;
+  if(form.id==='appointment-availability-form'){
+    event.preventDefault();const button=form.querySelector('button[type="submit"]'),message=form.querySelector('[role="status"]');button.disabled=true;message.textContent='';
+    try{
+      const values=new FormData(form),windows=[...form.querySelectorAll('input[name="weekday"]:checked')].map(input=>({weekday:Number(input.value),start:values.get(`start_${input.value}`),end:values.get(`end_${input.value}`)}));
+      await appointmentMutation({action:'set_availability',tenant_id:values.get('tenant_id'),timezone:values.get('timezone'),duration_minutes:Number(values.get('duration_minutes')),windows});
+      toast('Availability saved.');renderCalendar();
+    }catch(error){message.textContent=error.message||'Could not save availability.';button.disabled=false}
+  }
+  if(form.id==='appointment-booking-form'||form.matches('.appointment-reschedule-form')){
+    event.preventDefault();const button=form.querySelector('button[type="submit"]'),message=form.querySelector('[role="status"]');if(button)button.disabled=true;if(message)message.textContent='';
+    try{
+      const values=new FormData(form),tenantId=values.get('tenant_id')||crmSalesTenantId,timezone=values.get('timezone')||form.dataset.timezone;
+      const startsAt=calendarLocalToUtc(values.get('starts_at'),timezone);
+      if(form.id==='appointment-booking-form')await appointmentMutation({action:'book',tenant_id:tenantId,contact_id:values.get('contact_id'),starts_at:startsAt});
+      else await appointmentMutation({action:'reschedule',tenant_id:tenantId,appointment_id:form.dataset.appointmentId,starts_at:startsAt});
+      toast(form.id==='appointment-booking-form'?'Demo booked. Reminder jobs are dry-run only.':'Demo rescheduled. Reminder jobs are dry-run only.');renderCalendar();
+    }catch(error){if(message)message.textContent=error.message||'Could not save the appointment.';else toast(error.message||'Could not save the appointment.');if(button)button.disabled=false}
+  }
+});
+document.addEventListener('click',async event=>{
+  const availability=event.target.closest('[data-open-availability]');
+  if(availability){view='Availability';render();return}
+  const cancel=event.target.closest('[data-cancel-appointment]');
+  if(!cancel)return;
+  cancel.disabled=true;
+  try{await appointmentMutation({action:'cancel',tenant_id:crmSalesTenantId,appointment_id:cancel.dataset.cancelAppointment});toast('Demo cancelled. Pending reminder jobs skipped.');renderCalendar()}
+  catch(error){toast(error.message||'Could not cancel the appointment.');cancel.disabled=false}
+});
 function renderCompliance(){ $('#main').innerHTML=header('Compliance controls','Outbound safeguards for the organization')+notice('All outbound activity is paused in this demo. Production controls need administrator authorization and an audited server-side pause.',true)+`<div class="split"><section class="surface section-card"><h2>Outbound activity</h2><p>Keep channels paused until policy, providers, identity, consent, suppression, and audit controls are live.</p><div class="field-list"><div><span>Calls</span>${status('Paused')}</div><div><span>SMS</span>${status('Paused')}</div><div><span>Bulk email</span>${status('Paused')}</div><div><span>Recordings</span>${status('Paused')}</div><div><span>Social publishing</span>${status('Paused')}</div><div><span>Ad audience sync</span>${status('Paused')}</div></div></section><section class="surface section-card"><h2>Release checklist</h2><div class="step-list">${['Legal review for target markets','Consent and suppression tests','Audit and retention schedules','Provider agreements and registrations','Administrator emergency controls'].map((x,i)=>`<div class="step"><b>${i+1}</b>${x}</div>`).join('')}</div></section></div>`}
 const moduleCopy={
   'Funnels & Automation':{Funnels:['Lead capture funnel','A multi-step route from landing page to booking.'], 'Landing pages':['Landing page library','Pages, versions, and domains for your organization.'], 'Forms & assessments':['Lead intake forms','Field mapping, UTM capture, and lead routing.'],Automations:['Journey builder','Triggers, filters, delays, branches, and approvals.'],'Run history':['Automation runs','Review each action, failure, and version.']},
@@ -154,7 +235,7 @@ function renderModule(){const copy=moduleCopy[category]?.[view]||[view,'This wor
 function renderSettings(){
   const adminLink='<a class="secondary settings-link" href="/foundation">Open Admin center</a>';
   if(view==='Domain & DNS'){
-    $('#main').innerHTML=header('Domain & DNS','Company domain and email authentication')+notice('Domain changes and automatic DNS setup are not connected yet. No records will be changed from this page.')+`<section class="surface section-card"><h2>Company domain</h2><p>Save your primary domain in the company profile. DNS verification, SPF, DKIM, and DMARC setup will appear here when a domain provider is connected.</p>${adminLink}</section>`;
+    $('#main').innerHTML=header('Domain & DNS','Use any domain you own')+notice('Any domain you own can be used. Ownership verification and DNS changes are not automated yet, so this page will not change DNS records.')+`<section class="surface section-card"><h2>Bring any domain</h2><p>Enter your domain in the company profile. Connecting a DNS provider and verifying ownership are separate steps; no domain is claimed as connected until those checks are implemented.</p>${adminLink}<button class="secondary" type="button" data-open-domain-connections>View domain connections</button></section>`;
     return;
   }
   const content={Organization:['Company settings','Manage your company details and workspace records in Admin center.'], 'Team & roles':['Team access','Review workspace roles and permissions before inviting additional users.'], 'Compliance controls':['Outreach controls','Review consent, suppression, and calling requirements before enabling outbound channels.'],Billing:['Subscription & billing','Plans, invoices, and payment methods will appear after billing is connected.']};
@@ -162,7 +243,7 @@ function renderSettings(){
   $('#main').innerHTML=header(view,'Workspace settings')+`<section class="surface section-card"><h2>${title}</h2><p>${body}</p>${view==='Organization'?adminLink:''}</section>`;
 }
 function renderAudit(){ $('#main').innerHTML=header('Audit history','Events for imports, outreach, roles, and compliance')+notice('These sample events are illustrative. An append-only audit store is required before production use.',true)+`<div class="surface"><div class="list-row"><span><h3>Role assigned</h3><p>Priya Shah assigned Sales manager · Sep 20, 2026</p></span></div><div class="list-row"><span><h3>Contact suppression updated</h3><p>Elliot Park marked Do not call · Sep 19, 2026</p></span></div><div class="list-row"><span><h3>Contact import reviewed</h3><p>12 rows previewed · Sep 17, 2026</p></span></div></div>`}
-render=function(){renderNav();if(!accessLoaded){$('#main').innerHTML='<div class="surface dashboard-loading">Loading your workspace…</div>';$('#detail').hidden=true;return}if(!availableCategories().length){$('#main').innerHTML=notice('Your account does not have an active workspace role. Ask your administrator for access.',true);$('#detail').hidden=true;return}if(!availableCategories().includes(category))category=availableCategories()[0];if(!availableViews(category).includes(view))view=availableViews(category)[0];renderNav();const key=category+'/'+view;if(category==='Dashboard'&&currentRole==='business_owner')renderAdminDashboard();else if(category==='Marketing')renderMarketing();else if(key==='Sales/My dashboard')renderSalesProfileDashboard();else if(key==='Sales/Contacts')renderContacts();else if(key==='Sales/Pipeline')renderPipeline();else if(key==='Sales/Tasks')renderTasks();else if(key==='Sales/Sales dialer')renderDialer();else if(key==='Sales/Call queues')renderQueues();else if(key==='Sales/Import contacts')renderImport();else if(key==='Reporting/Sales dashboard'&&canViewSalesReports)renderReports();else if(key==='Communications/Unified inbox'||['SMS','Email','Calls'].includes(view)&&category==='Communications')renderInbox();else if(key==='Communications/Consent center')renderConsent();else if(key==='Calendars/Calendar'||key==='Calendars/Appointments')renderCalendar();else if(key==='Settings/Compliance controls')renderCompliance();else if(key==='Reporting/Audit history')renderAudit();else if(category==='Settings')renderSettings();else renderModule();renderDetail()};
+render=function(){renderNav();if(!accessLoaded){$('#main').innerHTML='<div class="surface dashboard-loading">Loading your workspace…</div>';$('#detail').hidden=true;return}if(!availableCategories().length){$('#main').innerHTML=notice('Your account does not have an active workspace role. Ask your administrator for access.',true);$('#detail').hidden=true;return}if(!availableCategories().includes(category))category=availableCategories()[0];if(!availableViews(category).includes(view))view=availableViews(category)[0];renderNav();const key=category+'/'+view;if(category==='Dashboard'&&currentRole==='business_owner')renderAdminDashboard();else if(category==='Marketing')renderMarketing();else if(key==='Sales/My dashboard')renderSalesProfileDashboard();else if(key==='Sales/Contacts')renderContacts();else if(key==='Sales/Pipeline')renderPipeline();else if(key==='Sales/Tasks')renderTasks();else if(key==='Sales/Sales dialer')renderDialer();else if(key==='Sales/Call queues')renderQueues();else if(key==='Sales/Import contacts')renderImport();else if(key==='Reporting/Sales dashboard'&&canViewSalesReports)renderReports();else if(key==='Communications/Unified inbox'||['SMS','Email','Calls'].includes(view)&&category==='Communications')renderInbox();else if(key==='Communications/Consent center')renderConsent();else if(['Calendars/Calendar','Calendars/Booking pages','Calendars/Availability','Calendars/Appointments'].includes(key))renderCalendar();else if(key==='Settings/Compliance controls')renderCompliance();else if(key==='Reporting/Audit history')renderAudit();else if(category==='Settings')renderSettings();else renderModule();renderDetail()};
 let pendingPipelineContactId=null;
 document.addEventListener('click',event=>{
   const card=event.target.closest('[data-pipeline-contact]');

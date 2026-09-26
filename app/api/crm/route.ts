@@ -184,6 +184,8 @@ async function handle(request: Request) {
         db.prepare("UPDATE tasks SET source_note_id = NULL WHERE tenant_id = ? AND source_note_id IN (SELECT id FROM notes WHERE tenant_id = ? AND contact_id = ?)").bind(tenantId, tenantId, data.contact_id),
         db.prepare("UPDATE tasks SET contact_id = NULL WHERE tenant_id = ? AND contact_id = ?").bind(tenantId, data.contact_id),
         db.prepare("UPDATE opportunities SET contact_id = NULL WHERE tenant_id = ? AND contact_id = ?").bind(tenantId, data.contact_id),
+        db.prepare("DELETE FROM appointment_reminder_jobs WHERE tenant_id = ? AND appointment_id IN (SELECT id FROM appointments WHERE tenant_id = ? AND contact_id = ?)").bind(tenantId, tenantId, data.contact_id),
+        db.prepare("DELETE FROM appointments WHERE tenant_id = ? AND contact_id = ?").bind(tenantId, data.contact_id),
         db.prepare("DELETE FROM notes WHERE tenant_id = ? AND contact_id = ?").bind(tenantId, data.contact_id),
         db.prepare("DELETE FROM activities WHERE tenant_id = ? AND contact_id = ?").bind(tenantId, data.contact_id),
         db.prepare("DELETE FROM consent_records WHERE tenant_id = ? AND contact_id = ?").bind(tenantId, data.contact_id),
