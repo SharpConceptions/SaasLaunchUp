@@ -166,10 +166,17 @@ export const providerConnections = sqliteTable("provider_connections", {
   id: text("id").primaryKey(), tenantId: text("tenant_id").notNull().references(() => organizations.id),
   provider: text("provider").notNull(), accountId: text("account_id").notNull(), keyId: text("key_id").notNull(),
   secretCiphertext: text("secret_ciphertext").notNull(), secretIv: text("secret_iv").notNull(),
+  scopesJson: text("scopes_json"),
   status: text("status").notNull().default("connected"), lastVerifiedAt: text("last_verified_at"),
   createdBy: text("created_by").notNull().references(() => users.id), createdAt: timestamp(),
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 }, table => [uniqueIndex("uidx_provider_connections_tenant_provider").on(table.tenantId, table.provider)]);
+export const integrationOAuthStates = sqliteTable("integration_oauth_states", {
+  state: text("state").primaryKey(), tenantId: text("tenant_id").notNull().references(() => organizations.id),
+  userId: text("user_id").notNull().references(() => users.id), provider: text("provider").notNull(),
+  codeVerifier: text("code_verifier").notNull(), redirectUri: text("redirect_uri").notNull(),
+  expiresAt: text("expires_at").notNull(), createdAt: timestamp(),
+}, table => [index("idx_integration_oauth_states_expiry").on(table.expiresAt)]);
 
 export const phoneNumberRequests = sqliteTable("phone_number_requests", {
   id: text("id").primaryKey(), tenantId: text("tenant_id").notNull().references(() => organizations.id),

@@ -120,6 +120,13 @@
       "when": 1790381289364,
       "tag": "0016_robust_veda",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1790424503509,
+      "tag": "0017_loose_the_twelve",
+      "breakpoints": true
     }
   ]
 }
