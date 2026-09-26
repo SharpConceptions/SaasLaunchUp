@@ -4,7 +4,8 @@ import hostingConfig from "./.openai/hosting.json";
 import { readExecutionProfile } from "./scripts/execution-profile.mjs";
 import { sites } from "./build/sites-vite-plugin";
 
-const SAASLAUNCHUP_DATABASE_ID = "621dee78-6ff2-4179-ab04-e2c963bede03";
+const SAASLAUNCHUP_DATABASE_ID = process.env.SAASLAUNCHUP_D1_DATABASE_ID || "621dee78-6ff2-4179-ab04-e2c963bede03";
+const SAASLAUNCHUP_DATABASE_NAME = process.env.SAASLAUNCHUP_D1_DATABASE_NAME || "saaslaunchup-production";
 
 const { d1, r2 } = hostingConfig;
 
@@ -13,7 +14,7 @@ const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === "seatbelt";
 const managedLinux = readExecutionProfile() === "managed-linux";
 
 const localBindingConfig = {
-  name: "saaslaunchupcrm",
+  name: process.env.CLOUDFLARE_WORKER_NAME || "saaslaunchupcrm",
   workers_dev: false,
   vars: {
     ...(process.env.CF_ACCESS_AUD ? { CF_ACCESS_AUD: process.env.CF_ACCESS_AUD } : {}),
@@ -25,8 +26,9 @@ const localBindingConfig = {
     ? [
         {
           binding: d1,
-          database_name: "saaslaunchup-production",
+          database_name: SAASLAUNCHUP_DATABASE_NAME,
           database_id: SAASLAUNCHUP_DATABASE_ID,
+          migrations_dir: "../../drizzle",
         },
       ]
     : [],

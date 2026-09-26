@@ -186,7 +186,8 @@ function calendarLocalToUtc(value,timezone){
   return new Date(candidate).toISOString();
 }
 async function appointmentMutation(payload){
-  const response=await fetch('/api/appointments',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  const tenantId=encodeURIComponent(payload.tenant_id);
+  const response=await fetch(`/api/appointments?tenant_id=${tenantId}`,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
   const data=await response.json();
   if(!response.ok)throw new Error(data.error||'Could not save the appointment.');
   return data;
