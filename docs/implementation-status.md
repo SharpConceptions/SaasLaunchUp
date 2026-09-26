@@ -2,6 +2,8 @@
 
 Updated: 2026-09-25
 
+**Merge readiness: BLOCKED pending automated integration tests.** PR review/check success and the manual staging walkthrough do not substitute for exercising the route's D1 batches and browser workflows in automated tests.
+
 Status meanings follow `docs/product-blueprint.md`: Not started, UI only, Backend exists, Integrated, Verified. `Verified` requires a real tenant walkthrough, permissions, failure handling, automated critical-path tests, and reproducible runtime evidence. No feature below is marked Verified based only on source inspection or local tests.
 
 ## Navigation inventory
@@ -37,11 +39,17 @@ Status meanings follow `docs/product-blueprint.md`: Not started, UI only, Backen
 
 ## Test and build evidence
 
-- `npm test`: 15 tests passed, 0 failed on 2026-09-25. Covers availability/timezone and closing boundaries, overlap boundaries, booking, manager/owner reschedule and cancellation scopes, stale reschedule cancellation races, tenant isolation, deterministic duplicate reminder jobs, and SQLite migration triggers/unique constraints.
+- `npm test`: 15 tests passed, 0 failed on 2026-09-25. These tests cover domain helpers and lifecycle behavior using `MemoryBookingStore`, plus direct SQLite migration/trigger/unique-key assertions. They do **not** instantiate the appointment route, execute its D1 batch statements, or automate the browser workflows. Passing this suite alone is insufficient for merge.
 - `npx eslint app/api/crm/route.ts 'app/api/v1/private/[resource]/route.ts' app/api/appointments/route.ts lib/appointments.ts db/schema.ts public/views.js tests/appointments.test.mjs`: 0 errors; two existing unused-variable warnings in `public/views.js` (`renderCompanies`, `dashboardTenantId`).
 - `npm run build`: passed and includes `/api/appointments`.
 - `npx tsc --noEmit --pretty false`: appointment changes type-check; the command still reports three existing WebCrypto/JWK typing errors in `lib/access-identity.ts` (`JsonWebKey.kid` and `BufferSource` compatibility).
-- No deployed authenticated booking walkthrough has been performed for this change. The slice is not Verified.
+- A manual authenticated staging walkthrough has been performed, but there are no automated D1-backed route tests or Playwright browser tests. The slice is not Verified and the PR is blocked pending those tests.
+
+## Required before merge
+
+- Add D1-backed route tests for create, reschedule, cancel, manager record scopes, cross-tenant denial, duplicate booking, lost optimistic update, and concurrent cancellation/reschedule. Assert persisted appointments, audit/activity rows, and reminder-job states.
+- Add Playwright coverage for Availability save, Booking pages create, Calendar/Appointments list, UI reschedule and cancel, timezone/DST input handling, visible error feedback, and absence of duplicate/stale jobs.
+- Keep the existing live staging walkthrough evidence as supplemental evidence; do not treat a clean automated review or manual click-through as a substitute for these checks.
 
 ## Provider and delivery boundaries
 
