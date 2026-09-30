@@ -12,7 +12,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
-  const returnTo = params.get("return_to")?.startsWith("/") ? params.get("return_to")! : "/workspace.html";
+  const returnTo = params.get("return_to")?.startsWith("/") ? params.get("return_to")! : "/console.html";
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setBusy(true); setError(""); setMessage("");

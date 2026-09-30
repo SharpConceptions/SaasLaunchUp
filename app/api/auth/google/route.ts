@@ -31,7 +31,7 @@ export async function GET(request: Request) {
   if (!profileResponse.ok || !profile?.sub || !profile.email || profile.email_verified === false) return errorPage("Google account verification failed.", 502);
   const email = profile.email.toLowerCase();
   let user = await env.DB.prepare("SELECT id, display_name FROM users WHERE lower(email) = ? LIMIT 1").bind(email).first<{ id: string; display_name: string | null }>();
-  let redirectTo = "/workspace.html";
+  let redirectTo = "/console.html";
   if (!user) {
     const userId = crypto.randomUUID(), tenantId = crypto.randomUUID();
     await env.DB.batch([

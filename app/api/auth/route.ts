@@ -61,7 +61,7 @@ export async function POST(request: Request) {
       env.DB.prepare("DELETE FROM auth_sessions WHERE user_id = ?").bind(row.user_id),
     ]);
     const session = await createSession(row.user_id);
-    return response({ ok: true, redirect: "/workspace.html" }, 200, sessionCookie(session.token, session.expiresAt));
+    return response({ ok: true, redirect: "/console.html" }, 200, sessionCookie(session.token, session.expiresAt));
   }
 
   if (data.action === "login") {
